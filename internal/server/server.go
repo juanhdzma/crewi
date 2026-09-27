@@ -36,6 +36,7 @@ func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api/parties", s.createParty)
 	mux.HandleFunc("GET /api/parties/{code}", s.getParty)
+	mux.HandleFunc("POST /api/parties/{code}/leave", s.leaveParty)
 	mux.HandleFunc("GET /ws/{code}", s.connect)
 	mux.Handle("GET /", spa(s.static))
 	return mux
@@ -54,6 +55,20 @@ func (s *Server) getParty(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"code": p.Code, "avatars": party.Avatars})
+}
+
+func (s *Server) leaveParty(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Token string `json:"token"`
+	}
+	json.NewDecoder(http.MaxBytesReader(w, r.Body, 1024)).Decode(&body)
+	p, ok := s.parties.Get(r.PathValue("code"))
+	if !ok || body.Token == "" || !p.LeaveWithToken(body.Token) {
+		http.Error(w, "player not found", http.StatusNotFound)
+		return
+	}
+	s.log.Info("player left", "party", p.Code)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 type clientMessage struct {

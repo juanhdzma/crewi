@@ -1,26 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { type PartyState, type ServerMessage, tokenKey, wsUrl } from "./party";
+import { type PartyState, type ServerMessage, saveSession, tokenFor, wsUrl } from "./party";
 
-type Status = "idle" | "connecting" | "joined" | "reconnecting" | "error" | "left";
+type Status = "idle" | "connecting" | "joined" | "reconnecting" | "error" | "left" | "replaced";
 
 const maxRetries = 5;
-
-function readToken(code: string): string | null {
-  try {
-    return sessionStorage.getItem(tokenKey(code));
-  } catch {
-    return null;
-  }
-}
-
-function writeToken(code: string, token: string | null) {
-  try {
-    if (token) sessionStorage.setItem(tokenKey(code), token);
-    else sessionStorage.removeItem(tokenKey(code));
-  } catch {
-    // Storage can be unavailable (private mode); the player just can't auto-reconnect.
-  }
-}
 
 export function useParty(code: string) {
   const [status, setStatus] = useState<Status>("idle");
@@ -39,27 +22,31 @@ export function useParty(code: string) {
       const ws = new WebSocket(wsUrl(code, location));
       socket.current = ws;
       let joinRejected = false;
+      const token = tokenFor(code) ?? "";
 
       ws.onopen = () => {
-        const token = readToken(code) ?? "";
         ws.send(JSON.stringify({ type: "join", payload: { name, avatar, token } }));
       };
 
       ws.onmessage = (event) => {
         const msg = JSON.parse(event.data) as ServerMessage;
         if (msg.type === "welcome") {
-          writeToken(code, msg.token);
+          saveSession({ code, token: msg.token });
           setPlayerId(msg.playerId);
           setStatus("joined");
           setError(null);
           retries.current = 0;
         } else if (msg.type === "state") {
           setState(msg.state);
-        } else {
+        } else if (msg.type === "error") {
           joinRejected = true;
-          writeToken(code, null);
+          if (token) saveSession(null);
           setError(msg.message);
           setStatus("error");
+        } else if (msg.type === "replaced") {
+          joinRejected = true;
+          setStatus("replaced");
+          ws.close();
         }
       };
 
@@ -83,7 +70,7 @@ export function useParty(code: string) {
     leaving.current = true;
     socket.current?.send(JSON.stringify({ type: "leave" }));
     socket.current?.close();
-    writeToken(code, null);
+    saveSession(null);
     setStatus("left");
     setState(null);
   }, [code]);
@@ -93,5 +80,5 @@ export function useParty(code: string) {
     socket.current?.close();
   }, []);
 
-  return { status, state, playerId, error, connect, leave, hasToken: readToken(code) !== null };
+  return { status, state, playerId, error, connect, leave, hasToken: tokenFor(code) !== null };
 }

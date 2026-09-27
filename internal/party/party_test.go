@@ -158,3 +158,27 @@ func TestGetIsCaseInsensitive(t *testing.T) {
 		t.Fatal("lowercase code not found")
 	}
 }
+
+func TestReconnectFromAnotherTabNotifiesOldTab(t *testing.T) {
+	_, p, _ := setup()
+	oldTab, newTab := &fakeSender{}, &fakeSender{}
+	ana, _ := p.Join("Ana", Avatars[0], "", oldTab)
+
+	p.Join("", "", ana.Token, newTab)
+
+	if msg, ok := oldTab.msgs[len(oldTab.msgs)-1].(ReplacedMessage); !ok || msg.Type != "replaced" {
+		t.Fatalf("old tab last message = %+v, want replaced", oldTab.msgs[len(oldTab.msgs)-1])
+	}
+}
+
+func TestLeaveWithToken(t *testing.T) {
+	_, p, _ := setup()
+	ana, _ := p.Join("Ana", Avatars[0], "", &fakeSender{})
+
+	if p.LeaveWithToken("wrong") {
+		t.Fatal("left with unknown token")
+	}
+	if !p.LeaveWithToken(ana.Token) || len(p.State().Players) != 0 {
+		t.Fatalf("player not removed: %+v", p.State())
+	}
+}

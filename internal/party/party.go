@@ -55,6 +55,10 @@ type State struct {
 	Players  []PlayerView `json:"players"`
 }
 
+type ReplacedMessage struct {
+	Type string `json:"type"`
+}
+
 type StateMessage struct {
 	Type  string `json:"type"`
 	State State  `json:"state"`
@@ -80,6 +84,9 @@ func (p *Party) Join(name, avatar, token string, s Sender) (*Player, error) {
 
 	if token != "" {
 		if pl := p.byToken(token); pl != nil {
+			if pl.sender != nil && pl.sender != s {
+				pl.sender.Send(ReplacedMessage{Type: "replaced"})
+			}
 			pl.sender = s
 			p.broadcast()
 			return pl, nil
@@ -128,7 +135,22 @@ func (p *Party) Disconnect(playerID string, s Sender) {
 func (p *Party) Leave(playerID string) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
+	p.remove(playerID)
+}
 
+func (p *Party) LeaveWithToken(token string) bool {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	pl := p.byToken(token)
+	if pl == nil {
+		return false
+	}
+	p.remove(pl.ID)
+	return true
+}
+
+func (p *Party) remove(playerID string) {
 	p.players = slices.DeleteFunc(p.players, func(pl *Player) bool { return pl.ID == playerID })
 	if p.leaderID == playerID {
 		p.leaderID = ""

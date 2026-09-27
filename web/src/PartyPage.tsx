@@ -1,5 +1,5 @@
 import { type FormEvent, useEffect, useRef, useState } from "react";
-import { fetchAvatars, type PartyState } from "./party";
+import { fetchAvatars, type PartyState, saveSession, tokenFor } from "./party";
 import { useParty } from "./useParty";
 
 export function PartyPage({ code }: { code: string }) {
@@ -9,7 +9,10 @@ export function PartyPage({ code }: { code: string }) {
   const autoJoined = useRef(false);
 
   useEffect(() => {
-    fetchAvatars(code).then(setAvatars, () => setAvatars(null));
+    fetchAvatars(code).then((avatars) => {
+      if (avatars === null && tokenFor(code)) saveSession(null);
+      setAvatars(avatars);
+    }, () => setAvatars(null));
   }, [code]);
 
   useEffect(() => {
@@ -33,6 +36,16 @@ export function PartyPage({ code }: { code: string }) {
       <Shell>
         <p>Saliste de la party.</p>
         <a href="/" className="underline">Volver al inicio</a>
+      </Shell>
+    );
+  }
+  if (party.status === "replaced") {
+    return (
+      <Shell>
+        <p>Abriste esta party en otra pestaña o ventana.</p>
+        <button onClick={() => connect("", "")} className="self-start rounded-xl bg-stone-900 px-6 py-3 font-semibold text-white hover:bg-stone-700">
+          Seguir acá
+        </button>
       </Shell>
     );
   }

@@ -25,16 +25,19 @@ Dependencies point inward: `server` depends on `party`, never the reverse. Game 
 
 1. `POST /api/parties` creates a party and returns its `code`. The link is `/p/{code}`.
 2. `GET /api/parties/{code}` returns 404 when the party does not exist.
-3. `GET /ws/{code}` opens a WebSocket. The first client message is `join` with name, avatar and an optional token.
-4. The server answers `welcome` with the player id and token. The browser keeps the token in `sessionStorage` to reconnect after a refresh.
-5. Clients send actions as `{"type": "...", "payload": {...}}`. After every change the server sends each player a full `state` snapshot built for that player.
+3. `POST /api/parties/{code}/leave` with `{"token": "..."}` removes a player without an open connection.
+4. `GET /ws/{code}` opens a WebSocket. The first client message is `join` with name, avatar and an optional token.
+5. The server answers `welcome` with the player id and token. The browser keeps the party code and token in `localStorage`, so closing the browser does not lose the seat.
+6. If the same player connects from another tab, the old tab receives `replaced` and stops reconnecting.
+7. Clients send actions as `{"type": "...", "payload": {...}}`. After every change the server sends each player a full `state` snapshot built for that player.
 
 Snapshots are per player because games hide information (guesses before the reveal, real locations). Full snapshots instead of diffs make reconnection trivial: a reconnecting client just receives the current state.
 
 ## Party Rules
 
 - The first player to join becomes leader. Only the leader starts and controls games.
-- A player who disconnects stays in the party as offline and can reconnect with their token.
+- A player who disconnects stays in the party as offline and can reconnect with their token, from the party link or from the home page.
+- Leaving removes the player; it works from the lobby or from the home page.
 - If the leader is offline for more than 30 seconds, leadership passes to the longest-connected online player.
 - A party with no connected players for 30 minutes is deleted.
 

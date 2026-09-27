@@ -142,3 +142,31 @@ func TestSPAFallbackServesIndex(t *testing.T) {
 		t.Fatalf("body %q, want index.html", body)
 	}
 }
+
+func TestLeaveEndpointRemovesPlayer(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	ts := newTestServer(t)
+	code := createParty(t, ts)
+
+	conn := dial(t, ctx, ts, code)
+	join(t, ctx, conn, "Ana", "")
+	welcome := read(t, ctx, conn)
+	read(t, ctx, conn)
+	conn.Close(websocket.StatusNormalClosure, "")
+
+	leave := func() int {
+		res, err := http.Post(ts.URL+"/api/parties/"+code+"/leave", "application/json", strings.NewReader(`{"token":"`+welcome.Token+`"}`))
+		if err != nil {
+			t.Fatal(err)
+		}
+		res.Body.Close()
+		return res.StatusCode
+	}
+	if status := leave(); status != http.StatusNoContent {
+		t.Fatalf("status %d, want 204", status)
+	}
+	if status := leave(); status != http.StatusNotFound {
+		t.Fatalf("second leave status %d, want 404", status)
+	}
+}

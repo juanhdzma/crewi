@@ -8,7 +8,7 @@ No accounts and no stored data: everything lives in server memory and disappears
 
 - Create or join a party with a link; pick a name and an avatar.
 - Live lobby with online presence and a leader who picks the games.
-- Reconnection after a refresh without joining again.
+- Rejoin the same seat after a refresh or after closing the browser, or leave the party from the home page.
 
 Planned games: Ventana (guess where each teammate's window is) and Who is most likely.
 

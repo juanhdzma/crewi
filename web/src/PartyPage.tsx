@@ -1,5 +1,7 @@
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { fetchAvatars, type PartyState, saveSession, tokenFor } from "./party";
+import { gameName, games } from "./games";
+import { MostLikely, type MostLikelyView } from "./MostLikely";
 import { useParty } from "./useParty";
 
 export function PartyPage({ code }: { code: string }) {
@@ -50,7 +52,16 @@ export function PartyPage({ code }: { code: string }) {
     );
   }
   if (party.state && party.playerId && party.status !== "error") {
-    return <Lobby state={party.state} playerId={party.playerId} reconnecting={party.status === "reconnecting"} onLeave={party.leave} />;
+    return (
+      <Room
+        state={party.state}
+        playerId={party.playerId}
+        reconnecting={party.status === "reconnecting"}
+        actionError={party.actionError}
+        send={party.send}
+        onLeave={party.leave}
+      />
+    );
   }
   if (party.status === "connecting" || (hasToken && party.status !== "error")) return <Shell>Conectando…</Shell>;
   return <JoinForm avatars={avatars} error={party.error} onJoin={connect} />;
@@ -108,7 +119,16 @@ function JoinForm({ avatars, error, onJoin }: { avatars: string[]; error: string
   );
 }
 
-function Lobby({ state, playerId, reconnecting, onLeave }: { state: PartyState; playerId: string; reconnecting: boolean; onLeave: () => void }) {
+type RoomProps = {
+  state: PartyState;
+  playerId: string;
+  reconnecting: boolean;
+  actionError: string | null;
+  send: (type: string, payload?: unknown) => void;
+  onLeave: () => void;
+};
+
+function Room({ state, playerId, reconnecting, actionError, send, onLeave }: RoomProps) {
   const [copied, setCopied] = useState(false);
   const isLeader = state.leaderId === playerId;
 
@@ -122,10 +142,15 @@ function Lobby({ state, playerId, reconnecting, onLeave }: { state: PartyState; 
     <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-6 px-4 py-10">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-sm text-stone-500">Party</p>
+          <p className="text-sm text-stone-500">{state.game ? gameName(state.game.id) : "Party"}</p>
           <h1 className="font-mono text-3xl font-bold">{state.code}</h1>
         </div>
         <div className="flex gap-2">
+          {state.game && isLeader && (
+            <button onClick={() => send("endGame")} className="rounded-lg border border-stone-300 bg-white px-4 py-2 font-medium hover:bg-stone-100">
+              Volver al lobby
+            </button>
+          )}
           <button onClick={copyLink} className="rounded-lg border border-stone-300 bg-white px-4 py-2 font-medium hover:bg-stone-100">
             {copied ? "Link copiado" : "Copiar link"}
           </button>
@@ -136,7 +161,20 @@ function Lobby({ state, playerId, reconnecting, onLeave }: { state: PartyState; 
       </header>
 
       {reconnecting && <p className="rounded-lg bg-amber-100 px-4 py-2 text-amber-900">Reconectando…</p>}
+      {actionError && <p className="rounded-lg bg-red-100 px-4 py-2 text-red-900">{actionError}</p>}
 
+      {state.game?.id === "mostlikely" ? (
+        <MostLikely view={state.game.view as MostLikelyView} players={state.players} isLeader={isLeader} send={send} />
+      ) : (
+        <Lobby state={state} playerId={playerId} isLeader={isLeader} send={send} />
+      )}
+    </main>
+  );
+}
+
+function Lobby({ state, playerId, isLeader, send }: { state: PartyState; playerId: string; isLeader: boolean; send: RoomProps["send"] }) {
+  return (
+    <>
       <section>
         <h2 className="mb-3 font-semibold">Jugadores ({state.players.length})</h2>
         <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -155,9 +193,30 @@ function Lobby({ state, playerId, reconnecting, onLeave }: { state: PartyState; 
         </ul>
       </section>
 
-      <section className="rounded-xl border border-dashed border-stone-300 p-6 text-center text-stone-500">
-        {isLeader ? "Pronto vas a poder elegir un juego acá." : "Esperando a que el leader elija un juego."}
+      <section>
+        <h2 className="mb-3 font-semibold">Juegos</h2>
+        {!isLeader && <p className="mb-3 text-stone-500">Esperando a que el leader elija un juego.</p>}
+        <ul className="flex flex-col gap-2">
+          {games.map((g) => (
+            <li key={g.id} className="flex items-center justify-between gap-4 rounded-xl bg-white p-4 shadow-sm">
+              <div>
+                <p className="font-semibold">
+                  {g.name} <span className="ml-1 text-xs font-normal text-stone-500">{g.scored ? "Con puntos" : "Sin puntos"}</span>
+                </p>
+                <p className="text-sm text-stone-600">{g.description}</p>
+              </div>
+              {isLeader && (
+                <button
+                  onClick={() => send("startGame", { game: g.id })}
+                  className="shrink-0 rounded-lg bg-stone-900 px-4 py-2 font-semibold text-white hover:bg-stone-700"
+                >
+                  Jugar
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
       </section>
-    </main>
+    </>
   );
 }

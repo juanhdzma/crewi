@@ -123,7 +123,7 @@ func (s *Server) connect(w http.ResponseWriter, r *http.Request) {
 	log.Info("player connected")
 
 	go s.writeLoop(ctx, conn, c)
-	s.readLoop(ctx, conn, p, pl)
+	s.readLoop(ctx, conn, p, pl, c)
 
 	p.Disconnect(pl.ID, c)
 	log.Info("player disconnected")
@@ -153,7 +153,7 @@ func (s *Server) join(ctx context.Context, conn *websocket.Conn, p *party.Party,
 	return pl, nil
 }
 
-func (s *Server) readLoop(ctx context.Context, conn *websocket.Conn, p *party.Party, pl *party.Player) {
+func (s *Server) readLoop(ctx context.Context, conn *websocket.Conn, p *party.Party, pl *party.Player, c *client) {
 	for {
 		var msg clientMessage
 		if err := wsjson.Read(ctx, conn, &msg); err != nil {
@@ -164,6 +164,10 @@ func (s *Server) readLoop(ctx context.Context, conn *websocket.Conn, p *party.Pa
 			p.Leave(pl.ID)
 			conn.Close(websocket.StatusNormalClosure, "left")
 			return
+		default:
+			if err := p.Act(pl.ID, msg.Type, msg.Payload); err != nil {
+				c.Send(map[string]string{"type": "actionError", "message": err.Error()})
+			}
 		}
 	}
 }

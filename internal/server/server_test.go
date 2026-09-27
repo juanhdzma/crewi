@@ -170,3 +170,24 @@ func TestLeaveEndpointRemovesPlayer(t *testing.T) {
 		t.Fatalf("second leave status %d, want 404", status)
 	}
 }
+
+func TestGameActionsOverWebSocket(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	ts := newTestServer(t)
+
+	conn := dial(t, ctx, ts, createParty(t, ts))
+	join(t, ctx, conn, "Ana", "")
+	read(t, ctx, conn)
+	read(t, ctx, conn)
+
+	wsjson.Write(ctx, conn, map[string]any{"type": "startGame", "payload": map[string]string{"game": "mostlikely"}})
+	if st := read(t, ctx, conn).State; st.Game == nil || st.Game.ID != "mostlikely" {
+		t.Fatalf("game not started: %+v", st)
+	}
+
+	wsjson.Write(ctx, conn, map[string]any{"type": "reveal"})
+	if msg := read(t, ctx, conn); msg.Type != "actionError" {
+		t.Fatalf("got %+v, want actionError", msg)
+	}
+}

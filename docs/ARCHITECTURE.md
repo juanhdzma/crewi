@@ -16,6 +16,7 @@ crewi is a browser-based suite of team building games for remote teams. The team
 | --- | --- |
 | `cmd/crewi` | Entry point. Wires the HTTP server and embeds the built frontend. |
 | `internal/party` | Parties, players, leader rules, game lifecycle. Pure Go, no HTTP. |
+| `internal/game` | The `Game` interface every game implements, plus one package per game. |
 | `internal/server` | HTTP API and WebSocket transport. Translates messages into `party` calls. |
 | `web` | React + TypeScript + Vite frontend, embedded into the Go binary at build time. |
 
@@ -43,7 +44,13 @@ Snapshots are per player because games hide information (guesses before the reve
 
 ## Games
 
-Each game implements one Go interface and declares whether it keeps score.
+Game rules run on the server; the frontend only renders the view it receives. Each game implements `game.Game`:
+
+- `Act(table, playerID, action, payload)` validates and applies an action.
+- `View(table, playerID)` returns what that player may see.
+- `Finished()` tells the party to return to the lobby.
+
+The party handles `startGame` and `endGame` (leader only) and forwards every other action to the running game. Failed actions answer `actionError` to the sender only. Games that keep score include the scores in their view.
 
 ### Ventana (scored)
 
@@ -57,7 +64,7 @@ Each game implements one Go interface and declares whether it keeps score.
 
 ### Who is most likely (unscored)
 
-1. The leader picks questions from a built-in bank.
+1. The leader picks questions from a built-in bank: `internal/game/mostlikely/questions.txt`, one question per line, embedded at build time.
 2. For each question, every player votes for one player.
 3. The leader controls the flow in real time: reveal, next question, or end.
 4. The reveal shows who got the votes so the team can discuss.

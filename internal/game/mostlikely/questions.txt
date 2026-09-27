@@ -1,0 +1,7 @@
+# One question per line. Empty lines and lines starting with # are ignored.
+# Each line completes "¿Quién es más probable que...".
+llegue tarde a la daily
+responda un mensaje a las 2 a.m.
+se pierda en una ciudad nueva
+gane un concurso de karaoke
+tenga más pestañas abiertas en el browser

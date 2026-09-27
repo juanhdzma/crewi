@@ -1,10 +1,14 @@
 package party
 
 import (
+	"encoding/json"
 	"errors"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/juanhdzma/crewi/internal/game"
+	"github.com/juanhdzma/crewi/internal/game/mostlikely"
 )
 
 type fakeSender struct{ msgs []any }
@@ -83,8 +87,8 @@ func TestReconnectWithTokenKeepsIdentity(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if again.ID != ana.ID || !p.State().Players[0].Online {
-		t.Fatalf("reconnect did not restore player: %+v", p.State())
+	if again.ID != ana.ID || !p.State("").Players[0].Online {
+		t.Fatalf("reconnect did not restore player: %+v", p.State(""))
 	}
 }
 
@@ -96,7 +100,7 @@ func TestStaleDisconnectIsIgnored(t *testing.T) {
 
 	p.Disconnect(ana.ID, oldTab)
 
-	if !p.State().Players[0].Online {
+	if !p.State("").Players[0].Online {
 		t.Fatal("stale disconnect marked player offline")
 	}
 }
@@ -110,13 +114,13 @@ func TestLeaderPassesAfterGracePeriod(t *testing.T) {
 
 	c.t = c.t.Add(LeaderGrace - time.Second)
 	r.Sweep()
-	if p.State().LeaderID != ana.ID {
+	if p.State("").LeaderID != ana.ID {
 		t.Fatal("leader changed before grace period")
 	}
 
 	c.t = c.t.Add(time.Second)
 	r.Sweep()
-	if p.State().LeaderID != beto.ID {
+	if p.State("").LeaderID != beto.ID {
 		t.Fatal("leader did not pass to online player")
 	}
 }
@@ -128,7 +132,7 @@ func TestLeaderLeavingPromotesNext(t *testing.T) {
 
 	p.Leave(ana.ID)
 
-	if st := p.State(); st.LeaderID != beto.ID || len(st.Players) != 1 {
+	if st := p.State(""); st.LeaderID != beto.ID || len(st.Players) != 1 {
 		t.Fatalf("unexpected state %+v", st)
 	}
 }
@@ -178,7 +182,54 @@ func TestLeaveWithToken(t *testing.T) {
 	if p.LeaveWithToken("wrong") {
 		t.Fatal("left with unknown token")
 	}
-	if !p.LeaveWithToken(ana.Token) || len(p.State().Players) != 0 {
-		t.Fatalf("player not removed: %+v", p.State())
+	if !p.LeaveWithToken(ana.Token) || len(p.State("").Players) != 0 {
+		t.Fatalf("player not removed: %+v", p.State(""))
+	}
+}
+
+func TestGameLifecycle(t *testing.T) {
+	_, p, _ := setup()
+	a, b := &fakeSender{}, &fakeSender{}
+	ana, _ := p.Join("Ana", Avatars[0], "", a)
+	beto, _ := p.Join("Beto", Avatars[1], "", b)
+
+	start := json.RawMessage(`{"game":"mostlikely"}`)
+	if err := p.Act(beto.ID, "startGame", start); !errors.Is(err, game.ErrLeaderOnly) {
+		t.Fatalf("non-leader start: %v", err)
+	}
+	if err := p.Act(ana.ID, "startGame", json.RawMessage(`{"game":"nope"}`)); !errors.Is(err, ErrUnknownGame) {
+		t.Fatalf("unknown game: %v", err)
+	}
+	if err := p.Act(ana.ID, "startGame", start); err != nil {
+		t.Fatal(err)
+	}
+	if err := p.Act(ana.ID, "startGame", start); !errors.Is(err, ErrGameRunning) {
+		t.Fatalf("double start: %v", err)
+	}
+
+	leaderView := a.last().Game.View.(mostlikely.View)
+	if b.last().Game.ID != "mostlikely" || len(leaderView.Bank) == 0 {
+		t.Fatalf("game state not broadcast: %+v", a.last().Game)
+	}
+
+	if err := p.Act(ana.ID, "begin", json.RawMessage(`{"questions":[0]}`)); err != nil {
+		t.Fatal(err)
+	}
+	p.Act(ana.ID, "reveal", nil)
+	p.Act(ana.ID, "next", nil)
+	if a.last().Game != nil {
+		t.Fatal("finished game did not return to lobby")
+	}
+
+	p.Act(ana.ID, "startGame", start)
+	if err := p.Act(beto.ID, "endGame", nil); !errors.Is(err, game.ErrLeaderOnly) {
+		t.Fatalf("non-leader end: %v", err)
+	}
+	p.Act(ana.ID, "endGame", nil)
+	if b.last().Game != nil {
+		t.Fatal("endGame did not return to lobby")
+	}
+	if err := p.Act(ana.ID, "vote", nil); !errors.Is(err, ErrNoGame) {
+		t.Fatalf("action without game: %v", err)
 	}
 }

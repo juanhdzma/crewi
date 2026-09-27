@@ -10,7 +10,14 @@ No accounts and no stored data: everything lives in server memory and disappears
 - Live lobby with online presence and a leader who picks the games.
 - Rejoin the same seat after a refresh or after closing the browser, or leave the party from the home page.
 
-Planned games: Ventana (guess where each teammate's window is) and Who is most likely.
+## Games
+
+| Game | Points | Description |
+| --- | --- | --- |
+| Who is most likely | No | The leader picks questions; everyone votes for a teammate and the leader reveals the results. |
+| Ventana | Yes | Planned. Guess where each teammate's window is on a map. |
+
+To add questions to Who is most likely, add lines to `internal/game/mostlikely/questions.txt`. Each line completes "¿Quién es más probable que..." and the file is embedded at build time, so rebuild after editing it.
 
 ## Run locally
 

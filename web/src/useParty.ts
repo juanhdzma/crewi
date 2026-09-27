@@ -10,6 +10,7 @@ export function useParty(code: string) {
   const [state, setState] = useState<PartyState | null>(null);
   const [playerId, setPlayerId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const socket = useRef<WebSocket | null>(null);
   const retries = useRef(0);
   const leaving = useRef(false);
@@ -43,6 +44,9 @@ export function useParty(code: string) {
           if (token) saveSession(null);
           setError(msg.message);
           setStatus("error");
+        } else if (msg.type === "actionError") {
+          setActionError(msg.message);
+          setTimeout(() => setActionError(null), 3000);
         } else if (msg.type === "replaced") {
           joinRejected = true;
           setStatus("replaced");
@@ -66,6 +70,10 @@ export function useParty(code: string) {
     [code],
   );
 
+  const send = useCallback((type: string, payload?: unknown) => {
+    socket.current?.send(JSON.stringify({ type, payload }));
+  }, []);
+
   const leave = useCallback(() => {
     leaving.current = true;
     socket.current?.send(JSON.stringify({ type: "leave" }));
@@ -80,5 +88,5 @@ export function useParty(code: string) {
     socket.current?.close();
   }, []);
 
-  return { status, state, playerId, error, connect, leave, hasToken: tokenFor(code) !== null };
+  return { status, state, playerId, error, actionError, connect, send, leave, hasToken: tokenFor(code) !== null };
 }

@@ -9,13 +9,15 @@ export type PartyState = {
   code: string;
   leaderId: string;
   players: Player[];
+  game: { id: string; view: unknown } | null;
 };
 
 export type ServerMessage =
   | { type: "welcome"; playerId: string; token: string }
   | { type: "state"; state: PartyState }
   | { type: "error"; message: string }
-  | { type: "replaced" };
+  | { type: "replaced" }
+  | { type: "actionError"; message: string };
 
 export function partyCodeFromPath(path: string): string | null {
   const match = /^\/p\/([A-Za-z0-9]+)\/?$/.exec(path);

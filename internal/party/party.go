@@ -2,12 +2,16 @@ package party
 
 import (
 	"crypto/rand"
+	"encoding/json"
 	"errors"
 	"slices"
 	"strings"
 	"sync"
 	"time"
 	"unicode/utf8"
+
+	"github.com/juanhdzma/crewi/internal/game"
+	"github.com/juanhdzma/crewi/internal/game/mostlikely"
 )
 
 const (
@@ -20,7 +24,15 @@ const (
 
 var Avatars = []string{"🦊", "🐼", "🐸", "🐙", "🦉", "🐯", "🐨", "🦄", "🐧", "🐢", "🦁", "🐝", "🐳", "🦜", "🐹", "🦖"}
 
+var catalog = map[string]func() game.Game{
+	"mostlikely": func() game.Game { return mostlikely.New(mostlikely.Bank) },
+}
+
 var (
+	ErrUnknownGame   = errors.New("unknown game")
+	ErrGameRunning   = errors.New("a game is already running")
+	ErrNoGame        = errors.New("no game is running")
+	ErrNotInParty    = errors.New("player is not in the party")
 	ErrInvalidName   = errors.New("name must be between 1 and 24 characters")
 	ErrInvalidAvatar = errors.New("unknown avatar")
 	ErrFull          = errors.New("party is full")
@@ -49,10 +61,16 @@ type PlayerView struct {
 	Online bool   `json:"online"`
 }
 
+type GameState struct {
+	ID   string `json:"id"`
+	View any    `json:"view"`
+}
+
 type State struct {
 	Code     string       `json:"code"`
 	LeaderID string       `json:"leaderId"`
 	Players  []PlayerView `json:"players"`
+	Game     *GameState   `json:"game"`
 }
 
 type ReplacedMessage struct {
@@ -72,6 +90,8 @@ type Party struct {
 	players    []*Player
 	leaderID   string
 	emptySince time.Time
+	game       game.Game
+	gameID     string
 }
 
 func newParty(code string, now func() time.Time) *Party {
@@ -162,10 +182,63 @@ func (p *Party) remove(playerID string) {
 	p.broadcast()
 }
 
-func (p *Party) State() State {
+func (p *Party) Act(playerID, action string, payload json.RawMessage) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	return p.state()
+
+	if p.byID(playerID) == nil {
+		return ErrNotInParty
+	}
+	isLeader := playerID == p.leaderID
+	switch action {
+	case "startGame":
+		if !isLeader {
+			return game.ErrLeaderOnly
+		}
+		if p.game != nil {
+			return ErrGameRunning
+		}
+		var req struct {
+			Game string `json:"game"`
+		}
+		json.Unmarshal(payload, &req)
+		newGame, ok := catalog[req.Game]
+		if !ok {
+			return ErrUnknownGame
+		}
+		p.game, p.gameID = newGame(), req.Game
+	case "endGame":
+		if !isLeader {
+			return game.ErrLeaderOnly
+		}
+		p.game, p.gameID = nil, ""
+	default:
+		if p.game == nil {
+			return ErrNoGame
+		}
+		if err := p.game.Act(p.table(), playerID, action, payload); err != nil {
+			return err
+		}
+		if p.game.Finished() {
+			p.game, p.gameID = nil, ""
+		}
+	}
+	p.broadcast()
+	return nil
+}
+
+func (p *Party) State(viewerID string) State {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return p.state(viewerID)
+}
+
+func (p *Party) table() game.Table {
+	players := make([]game.Player, len(p.players))
+	for i, pl := range p.players {
+		players[i] = game.Player{ID: pl.ID}
+	}
+	return game.Table{Players: players, LeaderID: p.leaderID}
 }
 
 func (p *Party) sweep() (expired bool) {
@@ -193,20 +266,23 @@ func (p *Party) promoteLeader() {
 }
 
 func (p *Party) broadcast() {
-	msg := StateMessage{Type: "state", State: p.state()}
 	for _, pl := range p.players {
 		if pl.sender != nil {
-			pl.sender.Send(msg)
+			pl.sender.Send(StateMessage{Type: "state", State: p.state(pl.ID)})
 		}
 	}
 }
 
-func (p *Party) state() State {
+func (p *Party) state(viewerID string) State {
 	players := make([]PlayerView, len(p.players))
 	for i, pl := range p.players {
 		players[i] = PlayerView{ID: pl.ID, Name: pl.Name, Avatar: pl.Avatar, Online: pl.Online()}
 	}
-	return State{Code: p.Code, LeaderID: p.leaderID, Players: players}
+	st := State{Code: p.Code, LeaderID: p.leaderID, Players: players}
+	if p.game != nil {
+		st.Game = &GameState{ID: p.gameID, View: p.game.View(p.table(), viewerID)}
+	}
+	return st
 }
 
 func (p *Party) byID(id string) *Player {

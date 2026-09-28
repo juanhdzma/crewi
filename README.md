@@ -15,7 +15,7 @@ No accounts and no stored data: everything lives in server memory and disappears
 | Game | Points | Description |
 | --- | --- | --- |
 | Who is most likely | No | The leader picks questions; everyone votes for a teammate and the leader reveals the results. |
-| Ventana | Yes | Planned. Guess where each teammate's window is on a map. |
+| Ventana | Yes | Each player shows their window on the call; the others guess where it is on a map. Locations can be exact or an approximate circle. |
 
 To add questions to Who is most likely, add lines to `internal/game/mostlikely/questions.txt`. Each line completes "¿Quién es más probable que..." and the file is embedded at build time, so rebuild after editing it.
 

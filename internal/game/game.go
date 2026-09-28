@@ -12,7 +12,8 @@ var (
 )
 
 type Player struct {
-	ID string
+	ID     string
+	Online bool
 }
 
 type Table struct {

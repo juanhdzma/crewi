@@ -1,0 +1,360 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-27T19:29:58+00:00",
+  "title": "Design System: crewi",
+  "extensions": {
+    "colorMeta": {
+      "call": {
+        "role": "neutral",
+        "displayName": "Call Graphite",
+        "canonical": "#15171c",
+        "oklch": "oklch(20.5% 0.010 268)",
+        "tonalRamp": [
+          "oklch(15% 0.005 268)",
+          "oklch(25% 0.006 268)",
+          "oklch(35% 0.007 268)",
+          "oklch(48% 0.009 268)",
+          "oklch(60% 0.010 268)",
+          "oklch(72% 0.009 268)",
+          "oklch(84% 0.007 268)",
+          "oklch(95% 0.006 268)"
+        ]
+      },
+      "panel": {
+        "role": "neutral",
+        "displayName": "Panel Slate",
+        "canonical": "#1f2229",
+        "oklch": "oklch(25.2% 0.014 267)",
+        "tonalRamp": [
+          "oklch(15% 0.006 267)",
+          "oklch(25% 0.008 267)",
+          "oklch(35% 0.010 267)",
+          "oklch(48% 0.012 267)",
+          "oklch(60% 0.014 267)",
+          "oklch(72% 0.012 267)",
+          "oklch(84% 0.010 267)",
+          "oklch(95% 0.008 267)"
+        ]
+      },
+      "panel-2": {
+        "role": "neutral",
+        "displayName": "Panel Slate Raised",
+        "canonical": "#2a2e37",
+        "oklch": "oklch(30.1% 0.017 266)",
+        "tonalRamp": [
+          "oklch(15% 0.008 266)",
+          "oklch(25% 0.010 266)",
+          "oklch(35% 0.012 266)",
+          "oklch(48% 0.015 266)",
+          "oklch(60% 0.017 266)",
+          "oklch(72% 0.015 266)",
+          "oklch(84% 0.012 266)",
+          "oklch(95% 0.010 266)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Warm Ink",
+        "canonical": "#f4f2ec",
+        "oklch": "oklch(96.1% 0.008 91)",
+        "tonalRamp": [
+          "oklch(15% 0.004 91)",
+          "oklch(25% 0.005 91)",
+          "oklch(35% 0.006 91)",
+          "oklch(48% 0.007 91)",
+          "oklch(60% 0.008 91)",
+          "oklch(72% 0.007 91)",
+          "oklch(84% 0.006 91)",
+          "oklch(95% 0.005 91)"
+        ]
+      },
+      "mute": {
+        "role": "neutral",
+        "displayName": "Muted Steel",
+        "canonical": "#a9adb8",
+        "oklch": "oklch(74.8% 0.016 270)",
+        "tonalRamp": [
+          "oklch(15% 0.007 270)",
+          "oklch(25% 0.009 270)",
+          "oklch(35% 0.011 270)",
+          "oklch(48% 0.014 270)",
+          "oklch(60% 0.016 270)",
+          "oklch(72% 0.014 270)",
+          "oklch(84% 0.011 270)",
+          "oklch(95% 0.009 270)"
+        ]
+      },
+      "cobalt": {
+        "role": "secondary",
+        "displayName": "Tile Cobalt",
+        "canonical": "#3157e6",
+        "oklch": "oklch(52.3% 0.220 267)",
+        "tonalRamp": [
+          "oklch(15% 0.096 267)",
+          "oklch(25% 0.124 267)",
+          "oklch(35% 0.151 267)",
+          "oklch(48% 0.187 267)",
+          "oklch(60% 0.220 267)",
+          "oklch(72% 0.187 267)",
+          "oklch(84% 0.154 267)",
+          "oklch(95% 0.124 267)"
+        ]
+      },
+      "tomato": {
+        "role": "secondary",
+        "displayName": "Tile Tomato",
+        "canonical": "#e5533a",
+        "oklch": "oklch(63.5% 0.186 32)",
+        "tonalRamp": [
+          "oklch(15% 0.081 32)",
+          "oklch(25% 0.105 32)",
+          "oklch(35% 0.128 32)",
+          "oklch(48% 0.158 32)",
+          "oklch(60% 0.186 32)",
+          "oklch(72% 0.158 32)",
+          "oklch(84% 0.130 32)",
+          "oklch(95% 0.105 32)"
+        ]
+      },
+      "lemon": {
+        "role": "primary",
+        "displayName": "Speaker Lemon",
+        "canonical": "#ffd23f",
+        "oklch": "oklch(87.9% 0.162 91)",
+        "tonalRamp": [
+          "oklch(15% 0.071 91)",
+          "oklch(25% 0.091 91)",
+          "oklch(35% 0.111 91)",
+          "oklch(48% 0.137 91)",
+          "oklch(60% 0.162 91)",
+          "oklch(72% 0.137 91)",
+          "oklch(84% 0.113 91)",
+          "oklch(95% 0.091 91)"
+        ]
+      },
+      "teal": {
+        "role": "secondary",
+        "displayName": "Tile Teal",
+        "canonical": "#139c80",
+        "oklch": "oklch(61.9% 0.115 174)",
+        "tonalRamp": [
+          "oklch(15% 0.050 174)",
+          "oklch(25% 0.065 174)",
+          "oklch(35% 0.079 174)",
+          "oklch(48% 0.098 174)",
+          "oklch(60% 0.115 174)",
+          "oklch(72% 0.098 174)",
+          "oklch(84% 0.080 174)",
+          "oklch(95% 0.065 174)"
+        ]
+      },
+      "lilac": {
+        "role": "secondary",
+        "displayName": "Tile Lilac",
+        "canonical": "#7d5ff0",
+        "oklch": "oklch(59.3% 0.208 288)",
+        "tonalRamp": [
+          "oklch(15% 0.091 288)",
+          "oklch(25% 0.117 288)",
+          "oklch(35% 0.143 288)",
+          "oklch(48% 0.177 288)",
+          "oklch(60% 0.208 288)",
+          "oklch(72% 0.177 288)",
+          "oklch(84% 0.146 288)",
+          "oklch(95% 0.117 288)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Hero statement only; Tailwind text-5xl / sm:text-6xl / lg:text-7xl, capped near 14ch."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Section statements; text-4xl / sm:text-5xl (sm:text-6xl on the closing panel)."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Game names inside screen-share panels."
+      },
+      "body-lead": {
+        "displayName": "Body Lead",
+        "purpose": "Supporting paragraphs in Muted Steel, 46ch to 54ch."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Chat, rejoin card, list rows; 15px in chat and captions."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Name tags, chips, control links, metadata."
+      }
+    },
+    "shadows": [
+      {
+        "name": "floating",
+        "value": "0 12px 32px rgb(0 0 0 / 0.5)",
+        "purpose": "Control bar; rejoin card at 0.45 alpha. Only for elements that float over the call."
+      },
+      {
+        "name": "speaker-ring",
+        "value": "inset 0 0 0 4px var(--color-lemon)",
+        "purpose": "Active-speaker state on a tile or presenter panel; state, not depth."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out-expo",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Caption line entrance, 400ms (opacity 0.35, 4px rise, 2px blur to none)."
+      },
+      {
+        "name": "speaker-hop",
+        "value": "2800ms interval; box-shadow 300ms",
+        "purpose": "Active-speaker ring moves between tiles."
+      },
+      {
+        "name": "speak",
+        "value": "700ms ease-in-out infinite, scaleY 0.35 to 1, staggered 0/180/90ms",
+        "purpose": "Speaking bars in the lemon badge."
+      },
+      {
+        "name": "color-hover",
+        "value": "200ms",
+        "purpose": "Button fill change on hover."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "animation and transition none",
+        "purpose": "Ring rests on the presenter; captions and bars are static."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "container",
+        "value": "1152px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The Crear party action; lemon pill with graphite text and a heavy plus.",
+      "html": "<button class=\"ds-btn-primary\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12h14\"/><path d=\"M12 5v14\"/></svg>Crear party</button>",
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;gap:8px;font-family:'Figtree Variable',ui-sans-serif,system-ui,sans-serif;background:var(--color-lemon,#ffd23f);color:var(--color-call,#15171c);border:none;border-radius:9999px;padding:16px 28px;font-size:1.125rem;font-weight:700;cursor:pointer;transition:background-color 200ms} .ds-btn-primary:hover{background:rgb(255 210 63/.85)} .ds-btn-primary:focus-visible{outline:2px solid var(--color-lemon,#ffd23f);outline-offset:3px} .ds-btn-primary:disabled{opacity:.6}"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Secondary navigation next to the primary action.",
+      "html": "<div class=\"ds-ghost-wrap\"><a href=\"#\" class=\"ds-btn-ghost\">Ver cómo funciona</a></div>",
+      "css": ".ds-ghost-wrap{background:var(--color-panel,#1f2229);padding:16px} .ds-btn-ghost{display:inline-block;font-family:'Figtree Variable',ui-sans-serif,system-ui,sans-serif;color:var(--color-ink,#f4f2ec);text-decoration:none;border-radius:9999px;padding:16px 20px;font-weight:600} .ds-btn-ghost:hover{background:var(--color-panel-2,#2a2e37)} .ds-btn-ghost:focus-visible{outline:2px solid var(--color-lemon,#ffd23f);outline-offset:3px}"
+    },
+    {
+      "name": "Control Bar",
+      "kind": "nav",
+      "refersTo": "control-bar",
+      "description": "Fixed bottom pill nav that doubles as the call controls.",
+      "html": "<nav class=\"ds-control\"><a href=\"#\" class=\"ds-control-link\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"6\" x2=\"10\" y1=\"11\" y2=\"11\"/><line x1=\"8\" x2=\"8\" y1=\"9\" y2=\"13\"/><line x1=\"15\" x2=\"15.01\" y1=\"12\" y2=\"12\"/><line x1=\"18\" x2=\"18.01\" y1=\"10\" y2=\"10\"/><path d=\"M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258-.007-.05-.011-.1-.017-.151A4 4 0 0 0 17.32 5z\"/></svg><span>Juegos</span></a><button class=\"ds-control-cta\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12h14\"/><path d=\"M12 5v14\"/></svg>Crear party</button></nav>",
+      "css": ".ds-control{display:inline-flex;align-items:center;gap:4px;background:var(--color-panel,#1f2229);border-radius:9999px;padding:6px;box-shadow:0 12px 32px rgb(0 0 0/.5);font-family:'Figtree Variable',ui-sans-serif,system-ui,sans-serif;} .ds-control-link{display:flex;align-items:center;gap:8px;border-radius:9999px;padding:10px 16px;font-size:.875rem;font-weight:500;color:var(--color-ink,#f4f2ec);text-decoration:none} .ds-control-link:hover{background:var(--color-panel-2,#2a2e37)} .ds-control-cta{margin-left:4px;display:flex;align-items:center;gap:8px;border:none;border-radius:9999px;padding:10px 20px;font-family:'Figtree Variable',ui-sans-serif,system-ui,sans-serif;font-size:.875rem;font-weight:700;background:var(--color-lemon,#ffd23f);color:var(--color-call,#15171c);cursor:pointer} .ds-control-cta:hover{background:rgb(255 210 63/.85)} .ds-control-link:focus-visible,.ds-control-cta:focus-visible{outline:2px solid var(--color-lemon,#ffd23f);outline-offset:3px}"
+    },
+    {
+      "name": "Participant Tile",
+      "kind": "custom",
+      "refersTo": "participant-tile",
+      "description": "Camera-off tile: flat tile color, centered emoji avatar, name tag bottom-left; lemon inset ring when speaking.",
+      "html": "<ul class=\"ds-tiles\"><li class=\"ds-tile ds-tile-speaking\"><span class=\"ds-avatar\">🦊</span><span class=\"ds-bars\"><i></i><i style=\"animation-delay:180ms\"></i><i style=\"animation-delay:90ms\"></i></span><span class=\"ds-nametag\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" style=\"opacity:.7\"><line x1=\"2\" x2=\"22\" y1=\"2\" y2=\"22\"/><path d=\"M18.89 13.23A7.12 7.12 0 0 0 19 12v-2\"/><path d=\"M5 10v2a7 7 0 0 0 12 5\"/><path d=\"M15 9.34V5a3 3 0 0 0-5.68-1.33\"/><path d=\"M9 9v3a3 3 0 0 0 5.12 2.12\"/><line x1=\"12\" x2=\"12\" y1=\"19\" y2=\"22\"/></svg>Ana</span></li><li class=\"ds-tile\" style=\"background:var(--color-tomato,#e5533a)\"><span class=\"ds-avatar\">🐼</span><span class=\"ds-nametag\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" style=\"opacity:.7\"><line x1=\"2\" x2=\"22\" y1=\"2\" y2=\"22\"/><path d=\"M18.89 13.23A7.12 7.12 0 0 0 19 12v-2\"/><path d=\"M5 10v2a7 7 0 0 0 12 5\"/><path d=\"M15 9.34V5a3 3 0 0 0-5.68-1.33\"/><path d=\"M9 9v3a3 3 0 0 0 5.12 2.12\"/><line x1=\"12\" x2=\"12\" y1=\"19\" y2=\"22\"/></svg>Beto</span></li></ul>",
+      "css": ".ds-tiles{display:grid;grid-template-columns:repeat(2,200px);gap:8px;list-style:none;margin:0;padding:8px;background:var(--color-call,#15171c)} .ds-tile{position:relative;display:flex;align-items:center;justify-content:center;aspect-ratio:4/3;border-radius:16px;background:var(--color-cobalt,#3157e6);transition:box-shadow 300ms;font-family:'Figtree Variable',ui-sans-serif,system-ui,sans-serif;} .ds-tile-speaking{box-shadow:inset 0 0 0 4px var(--color-lemon,#ffd23f)} .ds-avatar{display:flex;align-items:center;justify-content:center;width:72px;height:72px;border-radius:9999px;background:rgb(0 0 0/.2);font-size:40px} .ds-nametag{position:absolute;left:8px;bottom:8px;display:flex;align-items:center;gap:4px;border-radius:9999px;background:rgb(0 0 0/.55);color:#fff;padding:4px 10px;font-size:.875rem;font-weight:500} .ds-bars{position:absolute;top:8px;right:8px;display:flex;align-items:center;justify-content:center;gap:3px;width:32px;height:32px;border-radius:9999px;background:var(--color-lemon,#ffd23f)} .ds-bars i{display:block;width:3px;height:14px;border-radius:9999px;background:var(--color-call,#15171c);animation:ds-speak 700ms ease-in-out infinite} @keyframes ds-speak{0%,100%{transform:scaleY(.35)}50%{transform:scaleY(1)}} @media (prefers-reduced-motion:reduce){.ds-bars i{animation:none}}"
+    },
+    {
+      "name": "Screen Share Panel",
+      "kind": "card",
+      "refersTo": "panel-card",
+      "description": "Panel with a 'presenting' title strip; game demos render inside as the shared screen.",
+      "html": "<article class=\"ds-share\"><p class=\"ds-share-strip\"><span class=\"ds-dot\"></span>Dani está presentando</p><div class=\"ds-share-body\"><h3 class=\"ds-share-title\">¿Quién es más probable?</h3><p class=\"ds-chip\">Sin puntos</p><p class=\"ds-share-text\">Todos votan por alguien del equipo, se revelan los votos y a debatir.</p></div></article>",
+      "css": ".ds-share{overflow:hidden;border-radius:16px;background:var(--color-panel,#1f2229);color:var(--color-ink,#f4f2ec);font-family:'Figtree Variable',ui-sans-serif,system-ui,sans-serif;max-width:520px} .ds-share-strip{margin:0;display:flex;align-items:center;gap:8px;background:var(--color-panel-2,#2a2e37);padding:8px 16px;font-size:.875rem;color:var(--color-mute,#a9adb8)} .ds-dot{width:8px;height:8px;border-radius:9999px;background:var(--color-tomato,#e5533a)} .ds-share-body{padding:32px} .ds-share-title{margin:0;font-family:'Bricolage Grotesque Variable',ui-sans-serif,sans-serif;font-size:1.875rem;font-weight:800;letter-spacing:-.02em} .ds-chip{display:inline-block;margin:12px 0 0;border-radius:9999px;background:var(--color-panel-2,#2a2e37);padding:4px 12px;font-size:.875rem;font-weight:600} .ds-share-text{margin:16px 0 0;max-width:46ch;font-size:1.125rem;color:var(--color-mute,#a9adb8)}"
+    },
+    {
+      "name": "Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Fact and status tags; the scored variant turns lemon.",
+      "html": "<ul class=\"ds-chips\"><li class=\"ds-chip2\">Sin cuentas</li><li class=\"ds-chip2\">Hasta 20 personas</li><li class=\"ds-chip2 ds-chip2-scored\">Con puntos</li></ul>",
+      "css": ".ds-chips{display:flex;flex-wrap:wrap;gap:8px;list-style:none;margin:0;padding:16px;background:var(--color-panel,#1f2229)} .ds-chip2{border-radius:9999px;background:var(--color-panel-2,#2a2e37);color:var(--color-ink,#f4f2ec);padding:6px 16px;font-family:'Figtree Variable',ui-sans-serif,system-ui,sans-serif;font-size:.875rem;font-weight:500} .ds-chip2-scored{background:var(--color-lemon,#ffd23f);color:var(--color-call,#15171c);font-weight:600}"
+    },
+    {
+      "name": "Section Headline",
+      "kind": "custom",
+      "refersTo": "panel-card",
+      "description": "Heavy Bricolage statement with a muted lead, inside a 24px-corner section panel.",
+      "html": "<section class=\"ds-section\"><h2 class=\"ds-h2\">Una party es solo un link.</h2><p class=\"ds-lead\">Nadie se registra ni descarga nada.</p><ol class=\"ds-steps\"><li><span>1</span>Crea la party y copia el link.</li><li><span>2</span>Pégalo en el chat de la llamada.</li></ol></section>",
+      "css": ".ds-section{border-radius:24px;background:var(--color-panel,#1f2229);color:var(--color-ink,#f4f2ec);padding:40px;font-family:'Figtree Variable',ui-sans-serif,system-ui,sans-serif;max-width:560px} .ds-h2{margin:0;font-family:'Bricolage Grotesque Variable',ui-sans-serif,sans-serif;font-size:3rem;line-height:1;font-weight:800;letter-spacing:-.03em;text-wrap:balance} .ds-lead{margin:16px 0 0;font-size:1.125rem;color:var(--color-mute,#a9adb8);max-width:52ch} .ds-steps{list-style:none;margin:32px 0 0;padding:0;display:flex;flex-direction:column;gap:16px;font-size:1.125rem} .ds-steps li{display:flex;align-items:baseline;gap:16px} .ds-steps span{font-family:'Bricolage Grotesque Variable',ui-sans-serif,sans-serif;font-size:1.5rem;font-weight:800;color:var(--color-lemon,#ffd23f);font-variant-numeric:tabular-nums}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Call Already in Progress",
+    "overview": "**Creative North Star: \"The Call Already in Progress\"**\n\ncrewi looks like the video call its players are already sitting in. The ground is a graphite call background; every section is something a call app would show: a grid of camera-off tiles, a presenter's shared screen, the chat side panel, a floating pill control bar, the \"call ended\" screen. Content lives inside those shapes, never beside them as chrome. The world is dark, flat and saturated: tiles are solid color fields with a centered emoji avatar, and a single lemon yellow marks whatever is live (the active speaker, the action, the focus).\n\nDensity is relaxed and tile-driven. Panels sit on an 8px call-grid gutter with generous interior padding, and the page scrolls through large rounded panels separated by wide vertical air. Type pairs a heavy, tightly tracked grotesque for statements with a friendly humanist sans for everything spoken or clicked. Motion is small and meaningful: the speaker ring hops between tiles and each caption line settles in with a short expo ease; with reduced motion the ring rests on the presenter and nothing moves.\n\nThe world refuses the category default for SaaS landings: no gradient hero, no product screenshot mockup, no row of three icon cards. If a surface cannot be read as a tile, panel or state of a call, it does not belong here.",
+    "keyCharacteristics": [
+      "Graphite call ground with two lifted panel tones; no light mode.",
+      "Camera-off tiles as flat saturated fields (cobalt, tomato, teal, lilac) with centered emoji avatars.",
+      "One lemon accent for the active speaker, primary action, focus ring, selection and numerals.",
+      "Pills for every control and tag; large soft corners for tiles and panels.",
+      "Name tags bottom-left on a translucent black pill, exactly as a call app places them.",
+      "Tabular digits for party codes, clocks, votes and points."
+    ],
+    "rules": [
+      {
+        "name": "The One Live Signal Rule",
+        "body": "Lemon means \"this is live or this is the action.\" It never fills a participant tile, never decorates, and never appears as body text color outside a speaker name or a numeral.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tiles Are People Rule",
+        "body": "Cobalt, tomato, teal and lilac belong to participants. Do not use them for buttons, links or section backgrounds.",
+        "section": "colors"
+      },
+      {
+        "name": "The Heavy Statement Rule",
+        "body": "Every display and headline line is Bricolage at 800 with negative tracking. Figtree is never set larger than 1.25rem.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Call Rule",
+        "body": "Tiles and panels never cast shadows. Only things that float over the call get the soft floating shadow.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do frame every new surface as a state of the call: tile, panel, chat, shared screen, control bar or call-ended screen.",
+      "Do keep lemon as the single live signal: primary action, active speaker, focus outline, selection, numerals.",
+      "Do put people's identity in the tile colors and emoji avatars, and name tags bottom-left on a translucent black pill.",
+      "Do use tabular digits for codes, clocks, votes and points.",
+      "Do set statements in Bricolage 800 with negative tracking and balanced wrapping.",
+      "Do stop the speaker hop, captions and speaking bars under prefers-reduced-motion, resting the ring on the presenter.",
+      "Do use Lucide icons at one stroke weight; the plus on primary buttons is the only heavier stroke (2.5)."
+    ],
+    "donts": [
+      "Don't use gradient heroes, product screenshot mockups or rows of three icon cards; the world refused them.",
+      "Don't fill a participant tile, section or button with lemon, or use tile colors for controls.",
+      "Don't add shadows to tiles or panels; only floating elements get the floating shadow.",
+      "Don't introduce a light theme or the stone/neutral light surfaces from the older lobby and game screens.",
+      "Don't set white text directly on a tile color; text over a tile sits on the translucent black name-tag pill."
+    ]
+  }
+}

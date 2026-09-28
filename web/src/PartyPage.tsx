@@ -3,6 +3,7 @@ import { fetchAvatars, type PartyState, saveSession, tokenFor } from "./party";
 import { gameName, games } from "./games";
 import { MostLikely, type MostLikelyView } from "./MostLikely";
 import { useParty } from "./useParty";
+import { Ventana, type VentanaView } from "./Ventana";
 
 export function PartyPage({ code }: { code: string }) {
   const [avatars, setAvatars] = useState<string[] | null | undefined>(undefined);
@@ -82,7 +83,7 @@ function JoinForm({ avatars, error, onJoin }: { avatars: string[]; error: string
 
   return (
     <Shell>
-      <h1 className="text-3xl font-bold">Unite a la party</h1>
+      <h1 className="text-3xl font-bold">Únete a la party</h1>
       <form onSubmit={submit} className="flex flex-col gap-4">
         <label className="flex flex-col gap-1">
           <span className="text-sm font-medium text-stone-600">Tu nombre</span>
@@ -139,7 +140,7 @@ function Room({ state, playerId, reconnecting, actionError, send, onLeave }: Roo
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-6 px-4 py-10">
+    <main className={`mx-auto flex min-h-screen flex-col gap-6 px-4 py-10 ${state.game?.id === "ventana" ? "max-w-6xl" : "max-w-2xl"}`}>
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-sm text-stone-500">{state.game ? gameName(state.game.id) : "Party"}</p>
@@ -165,6 +166,8 @@ function Room({ state, playerId, reconnecting, actionError, send, onLeave }: Roo
 
       {state.game?.id === "mostlikely" ? (
         <MostLikely view={state.game.view as MostLikelyView} players={state.players} isLeader={isLeader} send={send} />
+      ) : state.game?.id === "ventana" ? (
+        <Ventana view={state.game.view as VentanaView} players={state.players} playerId={playerId} isLeader={isLeader} send={send} />
       ) : (
         <Lobby state={state} playerId={playerId} isLeader={isLeader} send={send} />
       )}
@@ -184,7 +187,7 @@ function Lobby({ state, playerId, isLeader, send }: { state: PartyState; playerI
               <span className="min-w-0">
                 <span className="block truncate font-medium">
                   {p.name}
-                  {p.id === playerId && " (vos)"}
+                  {p.id === playerId && " (tú)"}
                 </span>
                 <span className="text-xs text-stone-500">{p.id === state.leaderId ? "Leader" : p.online ? "Online" : "Offline"}</span>
               </span>

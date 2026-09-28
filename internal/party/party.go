@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"errors"
+	mathrand "math/rand/v2"
 	"slices"
 	"strings"
 	"sync"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/juanhdzma/crewi/internal/game"
 	"github.com/juanhdzma/crewi/internal/game/mostlikely"
+	"github.com/juanhdzma/crewi/internal/game/ventana"
 )
 
 const (
@@ -26,6 +28,9 @@ var Avatars = []string{"🦊", "🐼", "🐸", "🐙", "🦉", "🐯", "🐨", "
 
 var catalog = map[string]func() game.Game{
 	"mostlikely": func() game.Game { return mostlikely.New(mostlikely.Bank) },
+	"ventana": func() game.Game {
+		return ventana.New(mathrand.New(mathrand.NewPCG(mathrand.Uint64(), mathrand.Uint64())))
+	},
 }
 
 var (
@@ -236,7 +241,7 @@ func (p *Party) State(viewerID string) State {
 func (p *Party) table() game.Table {
 	players := make([]game.Player, len(p.players))
 	for i, pl := range p.players {
-		players[i] = game.Player{ID: pl.ID}
+		players[i] = game.Player{ID: pl.ID, Online: pl.Online()}
 	}
 	return game.Table{Players: players, LeaderID: p.leaderID}
 }

@@ -8,7 +8,7 @@ crewi is a browser-based suite of team building games for remote teams. The team
 - No persistence. All state lives in the memory of a single Go process. A restart wipes every party, and that is accepted.
 - A party outlives its games: when a game ends, players return to the lobby and the leader can start another one.
 - Expected load: up to 20 players per party and a handful of parties at the same time. One instance is enough.
-- Outbound dependencies: map tiles from OpenStreetMap, loaded by the browser. The server calls nothing external.
+- Outbound dependencies: Esri World Imagery satellite tiles loaded by the browser (the provider is one constant in `web/src/Ventana.tsx`). The server calls nothing external.
 
 ## Components
 
@@ -55,12 +55,13 @@ The party handles `startGame` and `endGame` (leader only) and forwards every oth
 ### Ventana (scored)
 
 1. Setup: each player shares their location. They accept the browser geolocation prompt and confirm the pin, or drop it manually on the map.
-2. Each player chooses a privacy mode: exact point, or a circle (radius chosen by the player). The circle center is randomly offset so the real location is not its center.
-3. Turns follow a random order. On their turn, a player shows their window on the video call.
-4. The others place a guess. The map is limited to a box of about 50 km around the target, with the box center randomly offset so it does not reveal the answer. Players can pan and zoom inside the box.
-5. When everyone has guessed, the target (point or circle) and all guesses are revealed.
-6. Score per guess: `round(5000 * exp(-d / k))`, where `d` is the distance to the point, or to the circle edge (0 inside the circle). `k` starts at 5 km and is tunable.
-7. After every player has had a turn, the highest total wins.
+2. Each player chooses a privacy mode: exact point, or a circle of 500 m to 2 km. The circle center is randomly offset (up to 90% of the radius) and the exact point is discarded immediately, so the server never keeps it.
+3. The leader starts once at least two players are ready. Turns follow a random order among ready players; players without a location can still guess.
+4. On their turn, a player shows their window on the video call. The others place a guess.
+5. The guess map is limited to a 12 km box whose center is randomly offset up to 3.5 km from the target (less for large circles, so the whole circle stays inside), so the box narrows the search without revealing the answer. Players can pan and zoom inside it.
+6. The turn is revealed automatically when every online guesser has answered; the leader can also reveal early.
+7. Score per guess: `round(5000 * exp(-d / 2 km))`, where `d` is the distance to the point, or to the circle edge (0 inside the circle).
+8. After the last turn a final ranking is shown until the leader returns to the lobby.
 
 ### Who is most likely (unscored)
 
@@ -77,7 +78,7 @@ The party handles `startGame` and `endGame` (leader only) and forwards every oth
 | 2026-09-27 | In-memory state, no database | Product requirement: nothing is persisted | Redis, SQLite |
 | 2026-09-27 | One mutex per party | Up to 20 players per party; simplest correct concurrency | Actor goroutine per party |
 | 2026-09-27 | Full per-player state snapshots over WebSocket | Hidden information per player and free reconnection | Event diffs |
-| 2026-09-27 | Leaflet + OpenStreetMap tiles | No API key or billing | Google Maps JS API |
+| 2026-09-27 | Leaflet with Esri World Imagery satellite tiles, no API keys | Keep crewi free with no billing account; satellite imagery fits a game about window views. Esri's terms require an ArcGIS license for this endpoint; move to a free ArcGIS Location Platform key before any public or commercial use | Google Maps JS API (needs billing; rejected to stay free), Stadia Stamen Terrain (style rejected) |
 | 2026-09-27 | Random-offset bounding box as the map hint | Narrows the search without leaking the answer and needs no geocoding service | Reverse geocoding the city name |
 
 ## Not Built for v1

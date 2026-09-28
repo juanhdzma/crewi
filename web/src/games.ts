@@ -12,6 +12,12 @@ export const games: GameInfo[] = [
     description: "Votan quién del equipo es más probable que haga algo. Sin puntos, puro debate.",
     scored: false,
   },
+  {
+    id: "ventana",
+    name: "Ventana",
+    description: "Cada uno muestra su ventana en la llamada y el resto adivina dónde está en el mapa.",
+    scored: true,
+  },
 ];
 
 export function gameName(id: string): string {

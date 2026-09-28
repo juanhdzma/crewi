@@ -1,1 +1,54 @@
 @import "tailwindcss";
+
+@theme {
+  --color-call: #15171c;
+  --color-panel: #1f2229;
+  --color-panel-2: #2a2e37;
+  --color-ink: #f4f2ec;
+  --color-mute: #a9adb8;
+  --color-cobalt: #3157e6;
+  --color-tomato: #e5533a;
+  --color-lemon: #ffd23f;
+  --color-teal: #139c80;
+  --color-lilac: #7d5ff0;
+  --font-display: "Bricolage Grotesque Variable", ui-sans-serif, sans-serif;
+  --font-sans: "Figtree Variable", ui-sans-serif, system-ui, sans-serif;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.landing {
+  background-color: var(--color-call);
+  color: var(--color-ink);
+  color-scheme: dark;
+  scrollbar-color: var(--color-panel-2) var(--color-call);
+}
+
+.landing ::selection {
+  background: var(--color-lemon);
+  color: var(--color-call);
+}
+
+.landing :focus-visible {
+  outline: 2px solid var(--color-lemon);
+  outline-offset: 3px;
+}
+
+@keyframes caption {
+  from { opacity: 0.35; transform: translateY(4px); filter: blur(2px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+
+@keyframes speak {
+  0%, 100% { transform: scaleY(0.35); }
+  50% { transform: scaleY(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing *, .landing *::before, .landing *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  html { scroll-behavior: auto !important; }
+}
+
+html { scroll-behavior: smooth; }

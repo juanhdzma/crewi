@@ -123,7 +123,7 @@ function QuestionPicker({ bank, onBegin }: { bank: string[]; onBegin: (questions
   return (
     <section className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-xl font-bold">Elegí las preguntas</h2>
+        <h2 className="text-xl font-bold">Elige las preguntas</h2>
         <button onClick={() => setSelected(all ? [] : bank.map((_, i) => i))} className="text-sm font-medium text-stone-600 underline">
           {all ? "Quitar todas" : "Elegir todas"}
         </button>

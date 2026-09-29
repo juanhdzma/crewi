@@ -1,5 +1,5 @@
 import { CalendarDays, Gamepad2, Link2, MessagesSquare, Plus, ShieldCheck } from "lucide-react";
-import { useEffect, useState } from "react";
+import { type MouseEvent, useEffect, useState } from "react";
 import { createParty, fetchParty, leaveParty, readSession, saveSession } from "./party";
 import { GameCopy, GameDemo, ScreenShare } from "./demos";
 import { games } from "./games";
@@ -14,9 +14,21 @@ const people = [
   { name: "Fer", avatar: "🐯", tile: "bg-p5" },
 ];
 
+function scrollToSection(e: MouseEvent<HTMLAnchorElement>) {
+  e.preventDefault();
+  document.querySelector(e.currentTarget.hash)?.scrollIntoView();
+}
+
 function useCreateParty() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const restored = (e: PageTransitionEvent) => e.persisted && setBusy(false);
+    addEventListener("pageshow", restored);
+    return () => removeEventListener("pageshow", restored);
+  }, []);
+
   async function create() {
     setBusy(true);
     setError(null);
@@ -128,7 +140,7 @@ function Hero({ onCreate, busy }: { onCreate: () => void; busy: boolean }) {
             <Plus className="size-5" strokeWidth={2.5} aria-hidden />
             {busy ? "Creando…" : "Crear party"}
           </button>
-          <a href="#como-funciona" className="hidden rounded-full px-5 py-4 font-semibold text-ink hover:bg-panel-2 sm:inline-block">
+          <a href="#como-funciona" onClick={scrollToSection} className="hidden rounded-full px-5 py-4 font-semibold text-ink hover:bg-panel-2 sm:inline-block">
             Ver cómo funciona
           </a>
         </div>
@@ -307,7 +319,7 @@ function ControlBar({ onCreate, busy }: { onCreate: () => void; busy: boolean })
     <nav aria-label="Secciones" className="fixed inset-x-0 bottom-4 z-20 flex justify-center px-4">
       <div className="flex items-center gap-1 rounded-full bg-panel p-1.5 shadow-[0_12px_32px_rgb(0_0_0/0.5)]">
         {links.map(({ href, label, Icon }) => (
-          <a key={href} href={href} aria-label={label} className="flex items-center gap-2 rounded-full px-3 py-2.5 text-sm font-medium text-ink hover:bg-panel-2 sm:px-4">
+          <a key={href} href={href} onClick={scrollToSection} aria-label={label} className="flex items-center gap-2 rounded-full px-3 py-2.5 text-sm font-medium text-ink hover:bg-panel-2 sm:px-4">
             <Icon className="size-5" aria-hidden />
             <span className="hidden sm:inline">{label}</span>
           </a>

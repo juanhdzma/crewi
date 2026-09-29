@@ -3,6 +3,7 @@ export type Player = {
   name: string;
   avatar: string;
   online: boolean;
+  photo?: number;
 };
 
 export type PartyState = {
@@ -63,12 +64,31 @@ export async function createParty(): Promise<string> {
   return body.code;
 }
 
-export async function fetchAvatars(code: string): Promise<string[] | null> {
+export type PartyInfo = { avatars: string[]; players: Player[] };
+
+export async function fetchParty(code: string): Promise<PartyInfo | null> {
   const res = await fetch(`/api/parties/${code}`);
   if (res.status === 404) return null;
   if (!res.ok) throw new Error("No se pudo cargar la party");
-  const body = (await res.json()) as { avatars: string[] };
-  return body.avatars;
+  const body = (await res.json()) as { avatars: string[]; players: Player[] | null };
+  return { avatars: body.avatars, players: body.players ?? [] };
+}
+
+export async function uploadPhoto(code: string, token: string, photo: Blob): Promise<void> {
+  const res = await fetch(`/api/parties/${code}/photo`, { method: "PUT", headers: { Authorization: `Bearer ${token}` }, body: photo });
+  if (!res.ok) throw new Error("No se pudo subir la foto");
+}
+
+export function photoUrl(code: string, player: Pick<Player, "id" | "photo">): string | null {
+  return player.photo ? `/api/parties/${code}/players/${player.id}/photo?v=${player.photo}` : null;
+}
+
+export function whoIsInside(names: string[]): string {
+  if (names.length === 0) return "Eres la primera persona en entrar";
+  if (names.length === 1) return `${names[0]} ya está adentro`;
+  if (names.length === 2) return `${names[0]} y ${names[1]} ya están adentro`;
+  const rest = names.length - 2;
+  return `${names[0]}, ${names[1]} y ${rest} más ya están adentro`;
 }
 
 export async function leaveParty(session: Session): Promise<void> {

@@ -1,6 +1,6 @@
 import { Gamepad2, Link2, MessagesSquare, Mic, MicOff, MonitorUp, Plus, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
-import { createParty, fetchAvatars, leaveParty, readSession, saveSession } from "./party";
+import { createParty, fetchParty, leaveParty, readSession, saveSession } from "./party";
 import { ThemeToggle } from "./ui";
 
 const people = [
@@ -50,7 +50,7 @@ export function Home() {
   useEffect(() => {
     const session = readSession();
     if (!session) return;
-    fetchAvatars(session.code).then(
+    fetchParty(session.code).then(
       (avatars) => (avatars ? setOpenParty(session.code) : saveSession(null)),
       () => {},
     );

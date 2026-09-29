@@ -1,6 +1,6 @@
 import { ArrowLeft, Check, CircleAlert, Link2, LogOut, WifiOff } from "lucide-react";
 import { useState } from "react";
-import type { Player } from "./party";
+import { partyCodeFromPath, photoUrl, type Player } from "./party";
 import { personColor } from "./people";
 import { type Presence } from "./presence";
 import { ThemeToggle } from "./ui";
@@ -12,14 +12,16 @@ const avatarSizes = {
   xl: "size-24 text-5xl",
 };
 
-export function Avatar({ player, size = "md", className = "" }: { player: Pick<Player, "id" | "avatar">; size?: keyof typeof avatarSizes; className?: string }) {
+export function Avatar({ player, size = "md", className = "" }: { player: Pick<Player, "id" | "avatar" | "photo">; size?: keyof typeof avatarSizes; className?: string }) {
+  const code = partyCodeFromPath(location.pathname);
+  const photo = code ? photoUrl(code, player) : null;
   return (
     <span
       className={`relative flex shrink-0 items-center justify-center overflow-hidden rounded-full leading-none ${avatarSizes[size]} ${className}`}
       style={{ background: personColor(player.id) }}
       aria-hidden
     >
-      {player.avatar}
+      {photo ? <img src={photo} alt="" className="size-full object-cover" /> : player.avatar}
     </span>
   );
 }

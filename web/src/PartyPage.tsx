@@ -1,5 +1,6 @@
-import { type FormEvent, useEffect, useRef, useState } from "react";
-import { fetchAvatars, type PartyState, saveSession, tokenFor } from "./party";
+import { useEffect, useRef, useState } from "react";
+import { fetchParty, type PartyInfo, type PartyState, saveSession, tokenFor, uploadPhoto } from "./party";
+import { Join } from "./Join";
 import { gameName, games } from "./games";
 import { MostLikely, type MostLikelyView } from "./MostLikely";
 import { ActionError, Connecting, EndedScreen, PeoplePanel, RoomHeader } from "./party-ui";
@@ -9,27 +10,41 @@ import { useParty } from "./useParty";
 import { Ventana, type VentanaView } from "./Ventana";
 
 export function PartyPage({ code }: { code: string }) {
-  const [avatars, setAvatars] = useState<string[] | null | undefined>(undefined);
+  const [info, setInfo] = useState<PartyInfo | null | undefined>(undefined);
+  const pendingPhoto = useRef<Blob | null>(null);
   const party = useParty(code);
   const { connect, hasToken, status } = party;
   const autoJoined = useRef(false);
 
   useEffect(() => {
-    fetchAvatars(code).then((avatars) => {
-      if (avatars === null && tokenFor(code)) saveSession(null);
-      setAvatars(avatars);
-    }, () => setAvatars(null));
+    fetchParty(code).then((info) => {
+      if (info === null && tokenFor(code)) saveSession(null);
+      setInfo(info);
+    }, () => setInfo(null));
   }, [code]);
 
   useEffect(() => {
-    if (avatars && hasToken && status === "idle" && !autoJoined.current) {
+    if (info && hasToken && status === "idle" && !autoJoined.current) {
       autoJoined.current = true;
       connect("", "");
     }
-  }, [avatars, hasToken, status, connect]);
+  }, [info, hasToken, status, connect]);
 
-  if (avatars === undefined) return <Connecting code={code} step="found" />;
-  if (avatars === null) {
+  useEffect(() => {
+    const photo = pendingPhoto.current;
+    const token = tokenFor(code);
+    if (status !== "joined" || !photo || !token) return;
+    pendingPhoto.current = null;
+    uploadPhoto(code, token, photo).catch((e) => console.warn(e));
+  }, [status, code]);
+
+  function join(name: string, avatar: string, photo: Blob | null) {
+    pendingPhoto.current = photo;
+    connect(name, avatar);
+  }
+
+  if (info === undefined) return <Connecting code={code} step="found" />;
+  if (info === null) {
     return <EndedScreen title="Esta party ya terminó" text="No queda nada guardado. Crea una nueva y pega el link en el chat." action={<HomeLink label="Crear una nueva" />} />;
   }
   if (party.status === "left") {
@@ -57,7 +72,7 @@ export function PartyPage({ code }: { code: string }) {
     );
   }
   if (party.status === "connecting" || (hasToken && party.status !== "error")) return <Connecting code={code} step="connecting" />;
-  return <JoinForm avatars={avatars} error={party.error} onJoin={connect} />;
+  return <Join info={info} error={party.error} onJoin={join} />;
 }
 
 function HomeLink({ label }: { label: string }) {
@@ -65,58 +80,6 @@ function HomeLink({ label }: { label: string }) {
     <a href="/" className="inline-flex items-center gap-2 rounded-full bg-accent px-7 py-4 text-lg font-bold text-on-accent press hover:bg-accent/90">
       {label}
     </a>
-  );
-}
-
-function Shell({ children }: { children: React.ReactNode }) {
-  return <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-4 px-4">{children}</main>;
-}
-
-function JoinForm({ avatars, error, onJoin }: { avatars: string[]; error: string | null; onJoin: (name: string, avatar: string) => void }) {
-  const [name, setName] = useState("");
-  const [avatar, setAvatar] = useState(avatars[0]);
-
-  function submit(e: FormEvent) {
-    e.preventDefault();
-    onJoin(name, avatar);
-  }
-
-  return (
-    <Shell>
-      <h1 className="text-3xl font-bold">Únete a la party</h1>
-      <form onSubmit={submit} className="flex flex-col gap-4">
-        <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium text-stone-600">Tu nombre</span>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            maxLength={24}
-            required
-            autoFocus
-            className="rounded-lg border border-stone-300 px-3 py-2"
-          />
-        </label>
-        <fieldset>
-          <legend className="mb-2 text-sm font-medium text-stone-600">Avatar</legend>
-          <div className="grid grid-cols-8 gap-2">
-            {avatars.map((a) => (
-              <button
-                key={a}
-                type="button"
-                aria-label={`Avatar ${a}`}
-                aria-pressed={a === avatar}
-                onClick={() => setAvatar(a)}
-                className={`aspect-square rounded-lg text-2xl ${a === avatar ? "bg-stone-900 ring-2 ring-stone-900" : "bg-white hover:bg-stone-100"}`}
-              >
-                {a}
-              </button>
-            ))}
-          </div>
-        </fieldset>
-        <button className="rounded-xl bg-stone-900 px-6 py-3 font-semibold text-white hover:bg-stone-700">Entrar</button>
-        {error && <p className="text-red-600">{error}</p>}
-      </form>
-    </Shell>
   );
 }
 

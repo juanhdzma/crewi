@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"io"
@@ -192,3 +193,52 @@ func TestGameActionsOverWebSocket(t *testing.T) {
 	}
 }
 
+func TestPhotoUploadAndDownload(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	ts := newTestServer(t)
+	code := createParty(t, ts)
+
+	conn := dial(t, ctx, ts, code)
+	join(t, ctx, conn, "Ana", "")
+	welcome := read(t, ctx, conn)
+	read(t, ctx, conn)
+
+	jpeg := append([]byte{0xFF, 0xD8, 0xFF, 0xE0}, make([]byte, 100)...)
+	upload := func(token string, body []byte) int {
+		req, _ := http.NewRequest(http.MethodPut, ts.URL+"/api/parties/"+code+"/photo", bytes.NewReader(body))
+		req.Header.Set("Authorization", "Bearer "+token)
+		res, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		res.Body.Close()
+		return res.StatusCode
+	}
+
+	if status := upload("nope", jpeg); status != http.StatusNotFound {
+		t.Fatalf("unknown token status %d, want 404", status)
+	}
+	if status := upload(welcome.Token, []byte("<svg/>")); status != http.StatusUnsupportedMediaType {
+		t.Fatalf("non-jpeg status %d, want 415", status)
+	}
+	if status := upload(welcome.Token, append(jpeg, make([]byte, party.MaxPhotoBytes)...)); status != http.StatusRequestEntityTooLarge {
+		t.Fatalf("oversized status %d, want 413", status)
+	}
+	if status := upload(welcome.Token, jpeg); status != http.StatusNoContent {
+		t.Fatalf("upload status %d, want 204", status)
+	}
+	if st := read(t, ctx, conn).State; st.Players[0].Photo != 1 {
+		t.Fatalf("state photo revision %d, want 1", st.Players[0].Photo)
+	}
+
+	res, err := http.Get(ts.URL + "/api/parties/" + code + "/players/" + welcome.PlayerID + "/photo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Body.Close()
+	got, _ := io.ReadAll(res.Body)
+	if res.StatusCode != http.StatusOK || res.Header.Get("Content-Type") != "image/jpeg" || !bytes.Equal(got, jpeg) {
+		t.Fatalf("download status %d type %q len %d", res.StatusCode, res.Header.Get("Content-Type"), len(got))
+	}
+}

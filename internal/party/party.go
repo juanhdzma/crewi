@@ -22,6 +22,7 @@ const (
 	LeaderGrace    = 30 * time.Second
 	EmptyPartyTTL  = 30 * time.Minute
 	partyCodeChars = 6
+	MaxPhotoBytes  = 64 << 10
 )
 
 var Avatars = []string{"🦊", "🐼", "🐸", "🐙", "🦉", "🐯", "🐨", "🦄", "🐧", "🐢", "🦁", "🐝", "🐳", "🦜", "🐹", "🦖"}
@@ -55,15 +56,22 @@ type Player struct {
 	joinedAt time.Time
 	lastSeen time.Time
 	sender   Sender
+	photo    []byte
+	photoRev int
 }
 
 func (p *Player) Online() bool { return p.sender != nil }
+
+func (p *Player) view() PlayerView {
+	return PlayerView{ID: p.ID, Name: p.Name, Avatar: p.Avatar, Online: p.Online(), Photo: p.photoRev}
+}
 
 type PlayerView struct {
 	ID     string `json:"id"`
 	Name   string `json:"name"`
 	Avatar string `json:"avatar"`
 	Online bool   `json:"online"`
+	Photo  int    `json:"photo,omitempty"`
 }
 
 type GameState struct {
@@ -232,6 +240,46 @@ func (p *Party) Act(playerID, action string, payload json.RawMessage) error {
 	return nil
 }
 
+// SetPhoto replaces the player's photo; it lives only in memory and goes away
+// when the player leaves or the party expires.
+func (p *Party) SetPhoto(token string, photo []byte) bool {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	pl := p.byToken(token)
+	if pl == nil {
+		return false
+	}
+	pl.photo = photo
+	pl.photoRev++
+	p.broadcast()
+	return true
+}
+
+func (p *Party) Photo(playerID string) ([]byte, bool) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	pl := p.byID(playerID)
+	if pl == nil || len(pl.photo) == 0 {
+		return nil, false
+	}
+	return pl.photo, true
+}
+
+func (p *Party) OnlinePlayers() []PlayerView {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	var views []PlayerView
+	for _, pl := range p.players {
+		if pl.Online() {
+			views = append(views, pl.view())
+		}
+	}
+	return views
+}
+
 func (p *Party) State(viewerID string) State {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -281,7 +329,7 @@ func (p *Party) broadcast() {
 func (p *Party) state(viewerID string) State {
 	players := make([]PlayerView, len(p.players))
 	for i, pl := range p.players {
-		players[i] = PlayerView{ID: pl.ID, Name: pl.Name, Avatar: pl.Avatar, Online: pl.Online()}
+		players[i] = pl.view()
 	}
 	st := State{Code: p.Code, LeaderID: p.leaderID, Players: players}
 	if p.game != nil {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"io/fs"
 	"log/slog"
 	"net/http"
@@ -37,6 +38,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/parties", s.createParty)
 	mux.HandleFunc("GET /api/parties/{code}", s.getParty)
 	mux.HandleFunc("POST /api/parties/{code}/leave", s.leaveParty)
+	mux.HandleFunc("PUT /api/parties/{code}/photo", s.setPhoto)
+	mux.HandleFunc("GET /api/parties/{code}/players/{id}/photo", s.getPhoto)
 	mux.HandleFunc("GET /ws/{code}", s.connect)
 	mux.Handle("GET /", spa(s.static))
 	return mux
@@ -54,7 +57,7 @@ func (s *Server) getParty(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "party not found", http.StatusNotFound)
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"code": p.Code, "avatars": party.Avatars})
+	writeJSON(w, http.StatusOK, map[string]any{"code": p.Code, "avatars": party.Avatars, "players": p.OnlinePlayers()})
 }
 
 func (s *Server) leaveParty(w http.ResponseWriter, r *http.Request) {
@@ -69,6 +72,47 @@ func (s *Server) leaveParty(w http.ResponseWriter, r *http.Request) {
 	}
 	s.log.Info("player left", "party", p.Code)
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (s *Server) setPhoto(w http.ResponseWriter, r *http.Request) {
+	p, ok := s.parties.Get(r.PathValue("code"))
+	if !ok {
+		http.Error(w, "party not found", http.StatusNotFound)
+		return
+	}
+	photo, err := io.ReadAll(http.MaxBytesReader(w, r.Body, party.MaxPhotoBytes))
+	if err != nil {
+		http.Error(w, "photo too large", http.StatusRequestEntityTooLarge)
+		return
+	}
+	if http.DetectContentType(photo) != "image/jpeg" {
+		http.Error(w, "photo must be a JPEG", http.StatusUnsupportedMediaType)
+		return
+	}
+	token := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
+	if token == "" || !p.SetPhoto(token, photo) {
+		http.Error(w, "player not found", http.StatusNotFound)
+		return
+	}
+	s.log.Info("player photo updated", "party", p.Code, "bytes", len(photo))
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (s *Server) getPhoto(w http.ResponseWriter, r *http.Request) {
+	p, ok := s.parties.Get(r.PathValue("code"))
+	if !ok {
+		http.Error(w, "party not found", http.StatusNotFound)
+		return
+	}
+	photo, ok := p.Photo(r.PathValue("id"))
+	if !ok {
+		http.Error(w, "photo not found", http.StatusNotFound)
+		return
+	}
+	w.Header().Set("Content-Type", "image/jpeg")
+	w.Header().Set("Cache-Control", "private, max-age=3600")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.Write(photo)
 }
 
 type clientMessage struct {

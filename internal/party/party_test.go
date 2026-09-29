@@ -233,3 +233,40 @@ func TestGameLifecycle(t *testing.T) {
 		t.Fatalf("action without game: %v", err)
 	}
 }
+
+func TestPhotoLivesWithThePlayer(t *testing.T) {
+	_, p, _ := setup()
+	s := &fakeSender{}
+	ana, _ := p.Join("Ana", Avatars[0], "", s)
+
+	if p.SetPhoto("wrong", []byte("x")) {
+		t.Fatal("unknown token set a photo")
+	}
+	if !p.SetPhoto(ana.Token, []byte("jpeg")) {
+		t.Fatal("photo not set")
+	}
+	if got := s.last().Players[0].Photo; got != 1 {
+		t.Fatalf("photo revision %d, want 1", got)
+	}
+	if photo, ok := p.Photo(ana.ID); !ok || string(photo) != "jpeg" {
+		t.Fatalf("photo %q %v", photo, ok)
+	}
+
+	p.Leave(ana.ID)
+	if _, ok := p.Photo(ana.ID); ok {
+		t.Fatal("photo survived leaving")
+	}
+}
+
+func TestOnlinePlayersSkipsDisconnected(t *testing.T) {
+	_, p, _ := setup()
+	a, b := &fakeSender{}, &fakeSender{}
+	p.Join("Ana", Avatars[0], "", a)
+	beto, _ := p.Join("Beto", Avatars[1], "", b)
+	p.Disconnect(beto.ID, b)
+
+	online := p.OnlinePlayers()
+	if len(online) != 1 || online[0].Name != "Ana" {
+		t.Fatalf("online players %+v", online)
+	}
+}

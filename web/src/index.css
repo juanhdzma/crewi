@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-@theme {
+@theme static {
   --color-call: #0e1427;
   --color-panel: #172039;
   --color-panel-2: #222d4e;

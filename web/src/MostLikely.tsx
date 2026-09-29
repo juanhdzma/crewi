@@ -26,7 +26,7 @@ export function MostLikely({ view, players, isLeader, send }: Props) {
     return isLeader && view.bank ? (
       <QuestionPicker bank={view.bank} onBegin={(questions) => send("begin", { questions })} />
     ) : (
-      <p className="py-10 text-center text-stone-500">El leader está eligiendo las preguntas…</p>
+      <p className="py-10 text-center text-stone-500">El anfitrión está eligiendo las preguntas…</p>
     );
   }
 
@@ -80,7 +80,7 @@ export function MostLikely({ view, players, isLeader, send }: Props) {
               </button>
             </div>
           ) : (
-            <p className="text-stone-500">A debatir. El leader pasa a la siguiente cuando estén listos.</p>
+            <p className="text-stone-500">A debatir. El anfitrión pasa a la siguiente cuando estén listos.</p>
           )}
         </>
       )}

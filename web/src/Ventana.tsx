@@ -344,7 +344,7 @@ function SetupPanel({ view, players, byId, isLeader, send, point, radiusM, setRa
             Empezar ({ready.length} turnos)
           </button>
         ) : (
-          <p className="text-stone-500">El leader empieza cuando estén listos.</p>
+          <p className="text-stone-500">El anfitrión empieza cuando estén listos.</p>
         )}
       </div>
     </>

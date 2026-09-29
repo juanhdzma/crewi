@@ -2,6 +2,9 @@ import { type FormEvent, useEffect, useRef, useState } from "react";
 import { fetchAvatars, type PartyState, saveSession, tokenFor } from "./party";
 import { gameName, games } from "./games";
 import { MostLikely, type MostLikelyView } from "./MostLikely";
+import { ActionError, Connecting, EndedScreen, PeoplePanel, RoomHeader } from "./party-ui";
+import { presenceOf } from "./presence";
+import { Button } from "./ui";
 import { useParty } from "./useParty";
 import { Ventana, type VentanaView } from "./Ventana";
 
@@ -25,31 +28,20 @@ export function PartyPage({ code }: { code: string }) {
     }
   }, [avatars, hasToken, status, connect]);
 
-  if (avatars === undefined) return <Shell>Cargando…</Shell>;
+  if (avatars === undefined) return <Connecting code={code} step="found" />;
   if (avatars === null) {
-    return (
-      <Shell>
-        <p>Esta party no existe o ya terminó.</p>
-        <a href="/" className="underline">Crear una nueva</a>
-      </Shell>
-    );
+    return <EndedScreen title="Esta party ya terminó" text="No queda nada guardado. Crea una nueva y pega el link en el chat." action={<HomeLink label="Crear una nueva" />} />;
   }
   if (party.status === "left") {
-    return (
-      <Shell>
-        <p>Saliste de la party.</p>
-        <a href="/" className="underline">Volver al inicio</a>
-      </Shell>
-    );
+    return <EndedScreen title="Saliste de la party" text="Cuando todos se van, la party se borra sola." action={<HomeLink label="Volver al inicio" />} />;
   }
   if (party.status === "replaced") {
     return (
-      <Shell>
-        <p>Abriste esta party en otra pestaña o ventana.</p>
-        <button onClick={() => connect("", "")} className="self-start rounded-xl bg-stone-900 px-6 py-3 font-semibold text-white hover:bg-stone-700">
-          Seguir acá
-        </button>
-      </Shell>
+      <EndedScreen
+        title="Abriste esta party en otra pestaña"
+        text="Solo una pestaña puede estar conectada a la vez."
+        action={<Button onClick={() => connect("", "")}>Seguir aquí</Button>}
+      />
     );
   }
   if (party.state && party.playerId && party.status !== "error") {
@@ -64,8 +56,16 @@ export function PartyPage({ code }: { code: string }) {
       />
     );
   }
-  if (party.status === "connecting" || (hasToken && party.status !== "error")) return <Shell>Conectando…</Shell>;
+  if (party.status === "connecting" || (hasToken && party.status !== "error")) return <Connecting code={code} step="connecting" />;
   return <JoinForm avatars={avatars} error={party.error} onJoin={connect} />;
+}
+
+function HomeLink({ label }: { label: string }) {
+  return (
+    <a href="/" className="inline-flex items-center gap-2 rounded-full bg-accent px-7 py-4 text-lg font-bold text-on-accent press hover:bg-accent/90">
+      {label}
+    </a>
+  );
 }
 
 function Shell({ children }: { children: React.ReactNode }) {
@@ -130,47 +130,41 @@ type RoomProps = {
 };
 
 function Room({ state, playerId, reconnecting, actionError, send, onLeave }: RoomProps) {
-  const [copied, setCopied] = useState(false);
   const isLeader = state.leaderId === playerId;
+  const game = state.game;
 
-  async function copyLink() {
-    await navigator.clipboard.writeText(location.href);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  }
+  let content: React.ReactNode;
+  if (game?.id === "mostlikely") content = <MostLikely view={game.view as MostLikelyView} players={state.players} isLeader={isLeader} send={send} />;
+  else if (game?.id === "ventana") content = <Ventana view={game.view as VentanaView} players={state.players} playerId={playerId} isLeader={isLeader} send={send} />;
+  else content = <Lobby state={state} playerId={playerId} isLeader={isLeader} send={send} />;
 
   return (
-    <main className={`mx-auto flex min-h-screen flex-col gap-6 px-4 py-10 ${state.game?.id === "ventana" ? "max-w-6xl" : "max-w-2xl"}`}>
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="text-sm text-stone-500">{state.game ? gameName(state.game.id) : "Party"}</p>
-          <h1 className="font-mono text-3xl font-bold">{state.code}</h1>
-        </div>
-        <div className="flex gap-2">
-          {state.game && isLeader && (
-            <button onClick={() => send("endGame")} className="rounded-lg border border-stone-300 bg-white px-4 py-2 font-medium hover:bg-stone-100">
-              Volver al lobby
-            </button>
-          )}
-          <button onClick={copyLink} className="rounded-lg border border-stone-300 bg-white px-4 py-2 font-medium hover:bg-stone-100">
-            {copied ? "Link copiado" : "Copiar link"}
-          </button>
-          <button onClick={onLeave} className="rounded-lg px-4 py-2 font-medium text-stone-600 hover:bg-stone-100">
-            Salir
-          </button>
-        </div>
-      </header>
-
-      {reconnecting && <p className="rounded-lg bg-amber-100 px-4 py-2 text-amber-900">Reconectando…</p>}
-      {actionError && <p className="rounded-lg bg-red-100 px-4 py-2 text-red-900">{actionError}</p>}
-
-      {state.game?.id === "mostlikely" ? (
-        <MostLikely view={state.game.view as MostLikelyView} players={state.players} isLeader={isLeader} send={send} />
-      ) : state.game?.id === "ventana" ? (
-        <Ventana view={state.game.view as VentanaView} players={state.players} playerId={playerId} isLeader={isLeader} send={send} />
-      ) : (
-        <Lobby state={state} playerId={playerId} isLeader={isLeader} send={send} />
-      )}
+    <main className="mx-auto flex min-h-dvh max-w-6xl flex-col gap-6 px-4 py-6">
+      <RoomHeader
+        code={state.code}
+        players={state.players}
+        label={game ? gameName(game.id) : "Lobby"}
+        canGoToLobby={!!game && isLeader}
+        reconnecting={reconnecting}
+        onLobby={() => send("endGame")}
+        onLeave={onLeave}
+      />
+      <div className={reconnecting ? "pointer-events-none opacity-45 grayscale" : ""}>
+        {game ? (
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-start">
+            <div className="flex min-w-0 flex-col gap-4">
+              {content}
+              <ActionError message={actionError} />
+            </div>
+            <PeoplePanel players={state.players} leaderId={state.leaderId} playerId={playerId} presence={(id) => presenceOf(game, id)} />
+          </div>
+        ) : (
+          <div className="flex flex-col gap-4">
+            {content}
+            <ActionError message={actionError} />
+          </div>
+        )}
+      </div>
     </main>
   );
 }
@@ -189,7 +183,7 @@ function Lobby({ state, playerId, isLeader, send }: { state: PartyState; playerI
                   {p.name}
                   {p.id === playerId && " (tú)"}
                 </span>
-                <span className="text-xs text-stone-500">{p.id === state.leaderId ? "Leader" : p.online ? "Online" : "Offline"}</span>
+                <span className="text-xs text-stone-500">{p.id === state.leaderId ? "Anfitrión" : p.online ? "Online" : "Offline"}</span>
               </span>
             </li>
           ))}
@@ -198,7 +192,7 @@ function Lobby({ state, playerId, isLeader, send }: { state: PartyState; playerI
 
       <section>
         <h2 className="mb-3 font-semibold">Juegos</h2>
-        {!isLeader && <p className="mb-3 text-stone-500">Esperando a que el leader elija un juego.</p>}
+        {!isLeader && <p className="mb-3 text-stone-500">Esperando a que el anfitrión elija un juego.</p>}
         <ul className="flex flex-col gap-2">
           {games.map((g) => (
             <li key={g.id} className="flex items-center justify-between gap-4 rounded-xl bg-white p-4 shadow-sm">

@@ -1,7 +1,7 @@
 import { Check, Play, X } from "lucide-react";
 import { type CSSProperties, useState } from "react";
 import type { Player } from "./party";
-import { Avatar, Podium, ProgressDots, WaitingDots } from "./party-ui";
+import { AnswerProgress, Avatar, Podium, ProgressDots, WaitingDots } from "./party-ui";
 import { podiumSteps } from "./podium";
 import { Button } from "./ui";
 
@@ -46,7 +46,7 @@ export function MostLikely({ view, players, isLeader, send }: Props) {
       {view.phase === "voting" ? (
         <>
           <VoteGrid players={players} myVote={view.myVote} onVote={(id) => send("vote", { target: id })} />
-          <VoteProgress players={players} voters={view.voters} />
+          <AnswerProgress people={players.filter((p) => p.online)} done={view.voters} verb="votaron" />
           {isLeader && (
             <div>
               <Button size="lg" onClick={() => send("reveal")}>
@@ -102,30 +102,6 @@ function VoteGrid({ players, myVote, onVote }: { players: Player[]; myVote?: str
         );
       })}
     </ul>
-  );
-}
-
-function VoteProgress({ players, voters }: { players: Player[]; voters: string[] }) {
-  const online = players.filter((p) => p.online);
-  const missing = online.filter((p) => !voters.includes(p.id));
-  const share = online.length ? voters.length / online.length : 0;
-  return (
-    <div className="flex items-center gap-4">
-      <span
-        className="flex size-16 shrink-0 items-center justify-center rounded-full"
-        style={{ background: `conic-gradient(var(--color-accent) ${share * 360}deg, var(--color-panel-2) 0)` }}
-      >
-        <span className="flex size-12 items-center justify-center rounded-full bg-call text-sm font-extrabold tabular-nums">
-          {voters.length}/{online.length}
-        </span>
-      </span>
-      <div>
-        <p className="font-bold">
-          {voters.length} de {online.length} votaron
-        </p>
-        <p className="text-sm text-mute">{missing.length ? `Faltan ${missing.map((p) => p.name).join(", ")}` : "Ya votaron todos"}</p>
-      </div>
-    </div>
   );
 }
 

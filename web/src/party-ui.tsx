@@ -120,12 +120,14 @@ export function PeoplePanel({ players, leaderId, playerId, presence }: { players
           return (
             <li key={p.id} className="flex items-center gap-3 py-2">
               <Avatar player={p} size="sm" />
-              <span className="min-w-0 flex-1 truncate text-sm font-semibold">
-                {p.name}
-                {p.id === playerId && " (tú)"}
+              <span className="flex min-w-0 flex-1 flex-col">
+                <span className="truncate text-sm font-semibold">
+                  {p.name}
+                  {p.id === playerId && " (tú)"}
+                </span>
+                {status && <span className={`text-xs ${presenceColor[status]}`}>{presenceLabel[status]}</span>}
               </span>
               {p.id === leaderId && <HostChip />}
-              {status && <span className={`text-xs whitespace-nowrap ${presenceColor[status]}`}>{presenceLabel[status]}</span>}
             </li>
           );
         })}
@@ -268,6 +270,30 @@ export function Podium({ steps, players, scoreLabel }: { steps: PodiumStep[]; pl
           </div>
         );
       })}
+    </div>
+  );
+}
+
+export function AnswerProgress({ people, done, verb }: { people: Player[]; done: string[]; verb: string }) {
+  const count = people.filter((p) => done.includes(p.id)).length;
+  const missing = people.filter((p) => !done.includes(p.id));
+  const share = people.length ? count / people.length : 0;
+  return (
+    <div className="flex items-center gap-4">
+      <span
+        className="flex size-16 shrink-0 items-center justify-center rounded-full transition-[background] duration-500"
+        style={{ background: `conic-gradient(var(--color-accent) ${share * 360}deg, var(--color-panel-2) 0)` }}
+      >
+        <span className="flex size-12 items-center justify-center rounded-full bg-call text-sm font-extrabold tabular-nums">
+          {count}/{people.length}
+        </span>
+      </span>
+      <div>
+        <p className="font-bold">
+          {count} de {people.length} {verb}
+        </p>
+        <p className="text-sm text-mute">{missing.length ? `Faltan ${missing.map((p) => p.name).join(", ")}` : "Ya están todos"}</p>
+      </div>
     </div>
   );
 }

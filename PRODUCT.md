@@ -27,14 +27,14 @@ No accounts, no installs, no stored data. A party is a link: open it, type a nam
 
 ## Capabilities and Constraints
 
-- Party of up to 20 players, joined by link; name plus emoji avatar.
+- Party of up to 20 players, joined by link; name plus a camera photo or an emoji. Photos live in memory and are dropped when the player leaves.
 - Leader role: picks and controls games; passes automatically if the leader disconnects.
 - Rejoin the same seat after a refresh or after closing the browser.
 - Games:
   - ¿Quién es más probable?: the leader picks questions; everyone votes for a teammate; results are revealed and discussed. No points.
   - Ventana: each player shares their location (exact or an approximate circle); on their turn they show their window on the call and the others guess the spot on a map. Points by distance.
 - Some games score points, others do not.
-- Location sharing requires the browser permission and HTTPS.
+- Location sharing and the camera photo require the browser permission and HTTPS.
 
 ## Brand Commitments
 

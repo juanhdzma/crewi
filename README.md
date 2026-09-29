@@ -6,16 +6,17 @@ No accounts and no stored data: everything lives in server memory and disappears
 
 ## Features
 
-- Create or join a party with a link; pick a name and an avatar.
-- Live lobby with online presence and a leader who picks the games.
+- Create or join a party with a link; pick a name and a camera photo or an emoji.
+- Live lobby with online presence and a host who picks the games; during a game a side panel shows who already answered.
+- Light and dark theme that follows the system, with a toggle.
 - Rejoin the same seat after a refresh or after closing the browser, or leave the party from the home page.
 
 ## Games
 
 | Game | Points | Description |
 | --- | --- | --- |
-| Who is most likely | No | The leader picks questions; everyone votes for a teammate and the leader reveals the results. |
-| Ventana | Yes | Each player shows their window on the call; the others guess where it is on a map. Locations can be exact or an approximate circle. |
+| Who is most likely | No | The host builds the round one question card at a time; everyone votes for a teammate and the results land on a podium. |
+| Ventana | Yes | Each player shows their window on the call, with hints of what to describe; the others guess where it is on a map. Locations can be exact or an approximate circle. |
 
 To add questions to Who is most likely, add lines to `internal/game/mostlikely/questions.txt`. Each line completes "¿Quién es más probable que..." and the file is embedded at build time, so rebuild after editing it.
 
@@ -41,7 +42,7 @@ The Vite dev server proxies `/api` and `/ws` to the Go server on port 8080.
 
 ## Deployment
 
-Serve it behind HTTPS. Browser geolocation, used by Ventana, only works in a secure context.
+Serve it behind HTTPS. Browser geolocation (Ventana) and the camera (join photo) only work in a secure context.
 
 ## Docs
 

@@ -4,7 +4,7 @@
 
 crewi is a browser-based suite of team building games for remote teams. The team talks over its usual video call; crewi runs the game on each person's screen.
 
-- No accounts, no login. A party is created and joined through a link; each player picks a name and an avatar.
+- No accounts, no login. A party is created and joined through a link; each player picks a name and an emoji, and can add a camera photo.
 - No persistence. All state lives in the memory of a single Go process. A restart wipes every party, and that is accepted.
 - A party outlives its games: when a game ends, players return to the lobby and the leader can start another one.
 - Expected load: up to 20 players per party and a handful of parties at the same time. One instance is enough.
@@ -25,12 +25,13 @@ Dependencies point inward: `server` depends on `party`, never the reverse. Game 
 ## Protocol
 
 1. `POST /api/parties` creates a party and returns its `code`. The link is `/p/{code}`.
-2. `GET /api/parties/{code}` returns 404 when the party does not exist.
+2. `GET /api/parties/{code}` returns the emoji list and the online players (for the join screen), or 404 when the party does not exist.
 3. `POST /api/parties/{code}/leave` with `{"token": "..."}` removes a player without an open connection.
-4. `GET /ws/{code}` opens a WebSocket. The first client message is `join` with name, avatar and an optional token.
-5. The server answers `welcome` with the player id and token. The browser keeps the party code and token in `localStorage`, so closing the browser does not lose the seat.
-6. If the same player connects from another tab, the old tab receives `replaced` and stops reconnecting.
-7. Clients send actions as `{"type": "...", "payload": {...}}`. After every change the server sends each player a full `state` snapshot built for that player.
+4. `PUT /api/parties/{code}/photo` with `Authorization: Bearer {token}` stores a JPEG of up to 64 KB for that player; `GET /api/parties/{code}/players/{id}/photo` serves it. The photo lives in memory and is dropped when the player leaves.
+5. `GET /ws/{code}` opens a WebSocket. The first client message is `join` with name, avatar and an optional token.
+6. The server answers `welcome` with the player id and token. The browser keeps the party code and token in `localStorage`, so closing the browser does not lose the seat.
+7. If the same player connects from another tab, the old tab receives `replaced` and stops reconnecting.
+8. Clients send actions as `{"type": "...", "payload": {...}}`. After every change the server sends each player a full `state` snapshot built for that player.
 
 Snapshots are per player because games hide information (guesses before the reveal, real locations). Full snapshots instead of diffs make reconnection trivial: a reconnecting client just receives the current state.
 
@@ -79,6 +80,7 @@ The party handles `startGame` and `endGame` (leader only) and forwards every oth
 | 2026-09-27 | One mutex per party | Up to 20 players per party; simplest correct concurrency | Actor goroutine per party |
 | 2026-09-27 | Full per-player state snapshots over WebSocket | Hidden information per player and free reconnection | Event diffs |
 | 2026-09-27 | Leaflet with Esri World Imagery satellite tiles, no API keys | Keep crewi free with no billing account; satellite imagery fits a game about window views. Esri's terms require an ArcGIS license for this endpoint; move to a free ArcGIS Location Platform key before any public or commercial use | Google Maps JS API (needs billing; rejected to stay free), Stadia Stamen Terrain (style rejected) |
+| 2026-09-28 | Player photos over HTTP, with only a revision number in the state | Twenty photos inside every broadcast would resend about 200 KB per vote; a revision lets browsers cache each photo | Base64 photos in the WebSocket state |
 | 2026-09-27 | Random-offset bounding box as the map hint | Narrows the search without leaking the answer and needs no geocoding service | Reverse geocoding the city name |
 
 ## Not Built for v1

@@ -227,3 +227,16 @@ export function Confetti() {
     </span>
   );
 }
+
+export function WaitingDots({ text }: { text: string }) {
+  return (
+    <div className="flex flex-col items-center gap-3 py-8 text-center" role="status">
+      <span className="flex gap-2" aria-hidden>
+        {[0, 200, 400].map((delay) => (
+          <span key={delay} className="size-3.5 rounded-full bg-accent animate-[pulse-soft_1.4s_ease-in-out_infinite]" style={{ animationDelay: `${delay}ms` }} />
+        ))}
+      </span>
+      <p className="text-mute">{text}</p>
+    </div>
+  );
+}

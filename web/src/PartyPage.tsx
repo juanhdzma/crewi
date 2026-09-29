@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { fetchParty, type PartyInfo, type PartyState, saveSession, tokenFor, uploadPhoto } from "./party";
 import { Join } from "./Join";
-import { gameName, games } from "./games";
+import { gameName } from "./games";
+import { Lobby } from "./Lobby";
 import { MostLikely, type MostLikelyView } from "./MostLikely";
 import { ActionError, Connecting, EndedScreen, PeoplePanel, RoomHeader } from "./party-ui";
 import { presenceOf } from "./presence";
@@ -129,54 +130,5 @@ function Room({ state, playerId, reconnecting, actionError, send, onLeave }: Roo
         )}
       </div>
     </main>
-  );
-}
-
-function Lobby({ state, playerId, isLeader, send }: { state: PartyState; playerId: string; isLeader: boolean; send: RoomProps["send"] }) {
-  return (
-    <>
-      <section>
-        <h2 className="mb-3 font-semibold">Jugadores ({state.players.length})</h2>
-        <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-          {state.players.map((p) => (
-            <li key={p.id} className={`flex items-center gap-3 rounded-xl bg-white px-3 py-2 shadow-sm ${p.online ? "" : "opacity-40"}`}>
-              <span className="text-3xl">{p.avatar}</span>
-              <span className="min-w-0">
-                <span className="block truncate font-medium">
-                  {p.name}
-                  {p.id === playerId && " (tú)"}
-                </span>
-                <span className="text-xs text-stone-500">{p.id === state.leaderId ? "Anfitrión" : p.online ? "Online" : "Offline"}</span>
-              </span>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section>
-        <h2 className="mb-3 font-semibold">Juegos</h2>
-        {!isLeader && <p className="mb-3 text-stone-500">Esperando a que el anfitrión elija un juego.</p>}
-        <ul className="flex flex-col gap-2">
-          {games.map((g) => (
-            <li key={g.id} className="flex items-center justify-between gap-4 rounded-xl bg-white p-4 shadow-sm">
-              <div>
-                <p className="font-semibold">
-                  {g.name} <span className="ml-1 text-xs font-normal text-stone-500">{g.scored ? "Con puntos" : "Sin puntos"}</span>
-                </p>
-                <p className="text-sm text-stone-600">{g.description}</p>
-              </div>
-              {isLeader && (
-                <button
-                  onClick={() => send("startGame", { game: g.id })}
-                  className="shrink-0 rounded-lg bg-stone-900 px-4 py-2 font-semibold text-white hover:bg-stone-700"
-                >
-                  Jugar
-                </button>
-              )}
-            </li>
-          ))}
-        </ul>
-      </section>
-    </>
   );
 }

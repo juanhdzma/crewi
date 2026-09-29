@@ -1,5 +1,9 @@
-import { useState } from "react";
+import { Check, Play, X } from "lucide-react";
+import { type CSSProperties, useState } from "react";
 import type { Player } from "./party";
+import { Avatar, Podium, ProgressDots, WaitingDots } from "./party-ui";
+import { podiumSteps } from "./podium";
+import { Button } from "./ui";
 
 export type MostLikelyView = {
   phase: "setup" | "voting" | "revealed";
@@ -19,68 +23,49 @@ type Props = {
   send: (type: string, payload?: unknown) => void;
 };
 
-const primary = "rounded-xl bg-stone-900 px-6 py-3 font-semibold text-white hover:bg-stone-700 disabled:opacity-40";
+const votesLabel = (n: number) => `${n} ${n === 1 ? "voto" : "votos"}`;
 
 export function MostLikely({ view, players, isLeader, send }: Props) {
   if (view.phase === "setup") {
     return isLeader && view.bank ? (
-      <QuestionPicker bank={view.bank} onBegin={(questions) => send("begin", { questions })} />
+      <QuestionDeck bank={view.bank} onBegin={(questions) => send("begin", { questions })} />
     ) : (
-      <p className="py-10 text-center text-stone-500">El anfitrión está eligiendo las preguntas…</p>
+      <WaitingDots text="Esperando a que el anfitrión elija las preguntas" />
     );
   }
 
-  const byId = new Map(players.map((p) => [p.id, p]));
   const last = view.index === view.total - 1;
 
   return (
     <section className="flex flex-col gap-6">
-      <div>
-        <p className="text-sm text-stone-500">
-          Pregunta {view.index + 1} de {view.total}
-        </p>
-        <h2 className="text-2xl font-bold sm:text-3xl">¿Quién es más probable que {view.question}?</h2>
+      <div className="flex flex-col gap-4">
+        <ProgressDots current={view.index} total={view.total} label="Pregunta" />
+        <QuestionCard question={view.question ?? ""} />
       </div>
 
       {view.phase === "voting" ? (
         <>
-          <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-            {players.map((p) => (
-              <li key={p.id}>
-                <button
-                  onClick={() => send("vote", { target: p.id })}
-                  aria-pressed={view.myVote === p.id}
-                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left shadow-sm ${
-                    view.myVote === p.id ? "bg-stone-900 text-white" : "bg-white hover:bg-stone-100"
-                  }`}
-                >
-                  <span className="text-3xl">{p.avatar}</span>
-                  <span className="truncate font-medium">{p.name}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-          <p className="text-stone-600">
-            Votaron {view.voters.length} de {players.filter((p) => p.online).length}{" "}
-            <span className="text-xl">{view.voters.map((id) => byId.get(id)?.avatar).join(" ")}</span>
-          </p>
+          <VoteGrid players={players} myVote={view.myVote} onVote={(id) => send("vote", { target: id })} />
+          <VoteProgress players={players} voters={view.voters} />
           {isLeader && (
-            <button onClick={() => send("reveal")} className={`${primary} self-start`}>
-              Revelar votos
-            </button>
+            <div>
+              <Button size="lg" onClick={() => send("reveal")}>
+                Revelar votos
+              </Button>
+            </div>
           )}
         </>
       ) : (
         <>
-          <ResultsList results={view.results ?? []} byId={byId} />
+          <Results results={view.results ?? []} players={players} />
           {isLeader ? (
-            <div className="flex gap-2">
-              <button onClick={() => send("next")} className={primary}>
+            <div>
+              <Button size="lg" onClick={() => send("next")}>
                 {last ? "Terminar juego" : "Siguiente pregunta"}
-              </button>
+              </Button>
             </div>
           ) : (
-            <p className="text-stone-500">A debatir. El anfitrión pasa a la siguiente cuando estén listos.</p>
+            <p className="text-mute">A debatir. El anfitrión pasa a la siguiente cuando estén listos.</p>
           )}
         </>
       )}
@@ -88,59 +73,138 @@ export function MostLikely({ view, players, isLeader, send }: Props) {
   );
 }
 
-function ResultsList({ results, byId }: { results: { playerId: string; votes: number }[]; byId: Map<string, Player> }) {
-  if (results.length === 0) return <p className="text-stone-500">Nadie votó en esta pregunta.</p>;
-  const max = results[0].votes;
+function QuestionCard({ question }: { question: string }) {
   return (
-    <ol className="flex flex-col gap-2">
-      {results.map((r) => {
-        const p = byId.get(r.playerId);
-        return (
-          <li key={r.playerId} className="flex items-center gap-3 rounded-xl bg-white px-3 py-2 shadow-sm">
-            <span className="text-3xl">{p?.avatar}</span>
-            <span className="w-32 truncate font-medium">{p?.name}</span>
-            <span className="h-3 flex-1 overflow-hidden rounded-full bg-stone-100">
-              <span className="block h-full rounded-full bg-stone-900" style={{ width: `${(r.votes / max) * 100}%` }} />
-            </span>
-            <span className="w-16 text-right tabular-nums">
-              {r.votes} {r.votes === 1 ? "voto" : "votos"}
-            </span>
-          </li>
-        );
-      })}
-    </ol>
+    <div key={question} className="-rotate-1 rounded-3xl bg-accent p-6 text-on-accent shadow-[0_18px_40px_rgb(0_0_0/0.3)] anim-rise sm:p-9">
+      <p className="text-sm font-bold opacity-70">¿Quién es más probable que…</p>
+      <p className="mt-1 text-3xl leading-tight font-extrabold tracking-tight text-balance sm:text-4xl">{question}?</p>
+    </div>
   );
 }
 
-function QuestionPicker({ bank, onBegin }: { bank: string[]; onBegin: (questions: number[]) => void }) {
-  const [selected, setSelected] = useState<number[]>(() => bank.map((_, i) => i));
-  const all = selected.length === bank.length;
+function VoteGrid({ players, myVote, onVote }: { players: Player[]; myVote?: string; onVote: (id: string) => void }) {
+  return (
+    <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+      {players.map((p, i) => {
+        const mine = p.id === myVote;
+        return (
+          <li key={p.id} className="anim-pop" style={{ "--i": i } as CSSProperties}>
+            <button
+              onClick={() => onVote(p.id)}
+              aria-pressed={mine}
+              className={`flex w-full flex-col items-center gap-2 rounded-2xl px-3 py-4 transition-transform ${mine ? "-rotate-2 bg-accent text-on-accent" : "bg-panel hover:bg-panel-2"}`}
+            >
+              <Avatar player={p} size="lg" />
+              <span className="w-full truncate font-bold">{p.name}</span>
+              <span className={`text-xs font-extrabold tracking-wide ${mine ? "" : "invisible"}`}>✓ TU VOTO</span>
+            </button>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
 
-  function toggle(i: number) {
-    setSelected((s) => (s.includes(i) ? s.filter((x) => x !== i) : [...s, i].sort((a, b) => a - b)));
+function VoteProgress({ players, voters }: { players: Player[]; voters: string[] }) {
+  const online = players.filter((p) => p.online);
+  const missing = online.filter((p) => !voters.includes(p.id));
+  const share = online.length ? voters.length / online.length : 0;
+  return (
+    <div className="flex items-center gap-4">
+      <span
+        className="flex size-16 shrink-0 items-center justify-center rounded-full"
+        style={{ background: `conic-gradient(var(--color-accent) ${share * 360}deg, var(--color-panel-2) 0)` }}
+      >
+        <span className="flex size-12 items-center justify-center rounded-full bg-call text-sm font-extrabold tabular-nums">
+          {voters.length}/{online.length}
+        </span>
+      </span>
+      <div>
+        <p className="font-bold">
+          {voters.length} de {online.length} votaron
+        </p>
+        <p className="text-sm text-mute">{missing.length ? `Faltan ${missing.map((p) => p.name).join(", ")}` : "Ya votaron todos"}</p>
+      </div>
+    </div>
+  );
+}
+
+function Results({ results, players }: { results: { playerId: string; votes: number }[]; players: Player[] }) {
+  if (results.length === 0) return <p className="text-mute">Nadie votó en esta pregunta.</p>;
+  const { podium, rest } = podiumSteps(results.map((r) => ({ id: r.playerId, score: r.votes })));
+  const byId = new Map(players.map((p) => [p.id, p]));
+  return (
+    <div className="flex flex-col gap-4">
+      <Podium steps={podium} players={players} scoreLabel={votesLabel} />
+      {rest.length > 0 && (
+        <p className="text-sm text-mute">
+          También: {rest.map((r) => `${byId.get(r.id)?.name ?? "?"} (${votesLabel(r.score)})`).join(", ")}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function QuestionDeck({ bank, onBegin }: { bank: string[]; onBegin: (questions: number[]) => void }) {
+  const [index, setIndex] = useState(0);
+  const [chosen, setChosen] = useState<number[]>([]);
+  const done = index >= bank.length;
+
+  function decide(keep: boolean) {
+    if (keep) setChosen((c) => [...c, index]);
+    setIndex((i) => i + 1);
   }
 
+  const start = (
+    <Button size="lg" variant={done ? "primary" : "secondary"} onClick={() => onBegin(chosen)} disabled={chosen.length === 0}>
+      <Play className="size-5" aria-hidden />
+      Empezar con {chosen.length} {chosen.length === 1 ? "pregunta" : "preguntas"}
+    </Button>
+  );
+
   return (
-    <section className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="text-xl font-bold">Elige las preguntas</h2>
-        <button onClick={() => setSelected(all ? [] : bank.map((_, i) => i))} className="text-sm font-medium text-stone-600 underline">
-          {all ? "Quitar todas" : "Elegir todas"}
-        </button>
+    <section className="flex max-w-xl flex-col gap-5">
+      <div className="flex items-baseline justify-between gap-3">
+        <h2 className="text-2xl font-extrabold">{done ? "Listo el mazo" : "¿Esta va?"}</h2>
+        <span className="text-sm text-mute tabular-nums">
+          {Math.min(index + 1, bank.length)} de {bank.length} · {chosen.length} {chosen.length === 1 ? "elegida" : "elegidas"}
+        </span>
       </div>
-      <ul className="flex flex-col gap-1">
-        {bank.map((q, i) => (
-          <li key={i}>
-            <label className="flex cursor-pointer items-center gap-3 rounded-lg bg-white px-3 py-2 shadow-sm">
-              <input type="checkbox" checked={selected.includes(i)} onChange={() => toggle(i)} className="size-4" />
-              <span>¿Quién es más probable que {q}?</span>
-            </label>
-          </li>
-        ))}
-      </ul>
-      <button onClick={() => onBegin(selected)} disabled={selected.length === 0} className={`${primary} self-start`}>
-        Empezar ({selected.length})
-      </button>
+      {done ? (
+        <div className="flex flex-col items-start gap-4 rounded-3xl bg-panel p-6">
+          <p className="text-mute">Revisaste todas las preguntas.</p>
+          <div className="flex flex-wrap gap-2">
+            {start}
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setIndex(0);
+                setChosen([]);
+              }}
+            >
+              Volver a empezar
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="relative">
+            <div className="absolute inset-x-4 -bottom-3 top-4 rotate-2 rounded-3xl bg-accent/35" aria-hidden />
+            <QuestionCard question={bank[index]} />
+          </div>
+          <div className="flex justify-center gap-3 pt-2">
+            <Button variant="secondary" size="lg" onClick={() => decide(false)}>
+              <X className="size-5" aria-hidden />
+              Saltar
+            </Button>
+            <Button size="lg" onClick={() => decide(true)}>
+              <Check className="size-5" aria-hidden />
+              Esta va
+            </Button>
+          </div>
+          {chosen.length > 0 && <div className="flex justify-center">{start}</div>}
+        </>
+      )}
     </section>
   );
 }

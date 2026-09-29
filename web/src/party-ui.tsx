@@ -2,6 +2,7 @@ import { ArrowLeft, Check, CircleAlert, Link2, LogOut, WifiOff } from "lucide-re
 import { useState } from "react";
 import { partyCodeFromPath, photoUrl, type Player } from "./party";
 import { personColor } from "./people";
+import type { PodiumStep } from "./podium";
 import { type Presence } from "./presence";
 import { ThemeToggle } from "./ui";
 
@@ -237,6 +238,36 @@ export function WaitingDots({ text }: { text: string }) {
         ))}
       </span>
       <p className="text-mute">{text}</p>
+    </div>
+  );
+}
+
+const stepHeights = ["h-32", "h-24", "h-16"];
+
+export function Podium({ steps, players, scoreLabel }: { steps: PodiumStep[]; players: Player[]; scoreLabel: (score: number) => string }) {
+  const byId = new Map(players.map((p) => [p.id, p]));
+  const order = [steps[1], steps[0], steps[2]].filter(Boolean);
+  return (
+    <div className="grid max-w-xl grid-cols-3 items-end gap-3">
+      {order.map((step) => {
+        const people = step.ids.map((id) => byId.get(id)).filter((p): p is Player => !!p);
+        return (
+          <div key={step.place} className={`flex flex-col items-center gap-2 text-center ${steps.length === 1 ? "col-start-2" : ""}`}>
+            <span className="flex -space-x-3">
+              {people.map((p) => (
+                <Avatar key={p.id} player={p} size="lg" className="anim-pop ring-4 ring-call" />
+              ))}
+            </span>
+            <span className="line-clamp-2 text-sm font-bold">{people.map((p) => p.name).join(" y ")}</span>
+            <span className="text-sm text-mute tabular-nums">{scoreLabel(step.score)}</span>
+            <span
+              className={`flex w-full items-start justify-center rounded-t-xl pt-2 text-3xl font-extrabold anim-grow-y ${stepHeights[step.place - 1]} ${step.place === 1 ? "bg-accent text-on-accent" : "bg-panel-2"}`}
+            >
+              {step.place}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }

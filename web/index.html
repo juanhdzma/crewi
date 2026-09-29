@@ -4,8 +4,17 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>crewi</title>
+    <script>
+      // Sets the theme before React loads so the page never flashes the wrong one.
+      try {
+        const stored = localStorage.getItem("crewi:theme");
+        document.documentElement.dataset.theme = stored === "light" || stored === "dark" ? stored : matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      } catch {
+        document.documentElement.dataset.theme = "dark";
+      }
+    </script>
   </head>
-  <body class="bg-stone-50 text-stone-900">
+  <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

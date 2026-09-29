@@ -1,14 +1,15 @@
 import { Gamepad2, Link2, MessagesSquare, Mic, MicOff, MonitorUp, Plus, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { createParty, fetchAvatars, leaveParty, readSession, saveSession } from "./party";
+import { ThemeToggle } from "./ui";
 
 const people = [
-  { name: "Ana", avatar: "🦊", tile: "bg-cobalt", line: "¿Y si jugamos algo antes de la retro?" },
-  { name: "Beto", avatar: "🐼", tile: "bg-tomato", line: "Les pego el link en el chat." },
-  { name: "Caro", avatar: "🐸", tile: "bg-teal", line: "Ya entré. Solo puse mi nombre y un emoji." },
-  { name: "Dani", avatar: "🐙", tile: "bg-lilac", line: "¿Quién es más probable que llegue tarde a la daily?" },
-  { name: "Eli", avatar: "🦉", tile: "bg-panel-2", line: "Mi ventana da a un parque. A ver si adivinan dónde." },
-  { name: "Fer", avatar: "🐯", tile: "bg-panel-2", line: "Y cuando terminamos, no queda nada guardado." },
+  { name: "Ana", avatar: "🦊", tile: "bg-p0", line: "¿Y si jugamos algo antes de la retro?" },
+  { name: "Beto", avatar: "🐼", tile: "bg-p1", line: "Les pego el link en el chat." },
+  { name: "Caro", avatar: "🐸", tile: "bg-p2", line: "Ya entré. Solo puse mi nombre y un emoji." },
+  { name: "Dani", avatar: "🐙", tile: "bg-p3", line: "¿Quién es más probable que llegue tarde a la daily?" },
+  { name: "Eli", avatar: "🦉", tile: "bg-p4", line: "Mi ventana da a un parque. A ver si adivinan dónde." },
+  { name: "Fer", avatar: "🐯", tile: "bg-p5", line: "Y cuando terminamos, no queda nada guardado." },
 ];
 
 const presenterLine = { name: "crewi", line: "Crea una party y jueguen mientras hablan." };
@@ -47,11 +48,6 @@ export function Home() {
   const [openParty, setOpenParty] = useState<string | null>(null);
 
   useEffect(() => {
-    document.body.classList.add("landing");
-    return () => document.body.classList.remove("landing");
-  }, []);
-
-  useEffect(() => {
     const session = readSession();
     if (!session) return;
     fetchAvatars(session.code).then(
@@ -68,7 +64,7 @@ export function Home() {
   }
 
   return (
-    <div className="landing min-h-dvh font-sans">
+    <div className="min-h-dvh">
       <TopBar />
 
       {openParty && (
@@ -77,7 +73,7 @@ export function Home() {
             Sigues en la party <span className="font-bold tabular-nums tracking-wider">{openParty}</span>.
           </p>
           <div className="flex gap-2">
-            <a href={`/p/${openParty}`} className="rounded-full bg-lemon px-4 py-2 font-semibold text-call hover:bg-lemon/85">
+            <a href={`/p/${openParty}`} className="rounded-full bg-accent px-4 py-2 font-semibold text-on-accent hover:bg-accent/90">
               Volver
             </a>
             <button onClick={leave} className="rounded-full px-4 py-2 font-medium text-mute hover:bg-panel hover:text-ink">
@@ -97,7 +93,7 @@ export function Home() {
       <ControlBar onCreate={party.create} busy={party.busy} />
 
       {party.error && (
-        <p role="alert" className="fixed bottom-24 left-1/2 z-40 -translate-x-1/2 rounded-full bg-tomato px-5 py-2 font-semibold text-call shadow-[0_12px_32px_rgb(0_0_0/0.5)]">
+        <p role="alert" className="fixed bottom-24 left-1/2 z-40 -translate-x-1/2 rounded-full bg-danger px-5 py-2 font-semibold text-white shadow-[0_12px_32px_rgb(0_0_0/0.5)]">
           {party.error}
         </p>
       )}
@@ -112,11 +108,14 @@ function TopBar() {
       <a href="/" className="font-display text-2xl font-extrabold tracking-tight">
         crewi
       </a>
-      <p className="text-sm text-mute" aria-hidden>
-        <span className="tabular-nums">{time}</span>
-        <span className="mx-2">|</span>
-        Retro del viernes
-      </p>
+      <div className="flex items-center gap-2">
+        <p className="hidden text-sm text-mute sm:block" aria-hidden>
+          <span className="tabular-nums">{time}</span>
+          <span className="mx-2">|</span>
+          Retro del viernes
+        </p>
+        <ThemeToggle />
+      </div>
     </header>
   );
 }
@@ -126,7 +125,7 @@ function Caption({ speaker, className }: { speaker: number; className: string })
   return (
     <p className={className} aria-hidden>
       <span key={speaker} className="animate-[caption_400ms_var(--ease-out-expo)]">
-        <span className="font-semibold text-lemon">{current.name}:</span> {current.line}
+        <span className="font-semibold text-accent-ink">{current.name}:</span> {current.line}
       </span>
     </p>
   );
@@ -138,11 +137,11 @@ function Hero({ speaker, onCreate, busy }: { speaker: number; onCreate: () => vo
       <div className="grid gap-2 md:h-[calc(100dvh-10.5rem)] md:min-h-[560px] md:grid-cols-4 md:grid-rows-3">
         <div
           className={`flex flex-col justify-between gap-5 rounded-2xl bg-panel p-6 transition-shadow duration-300 sm:gap-10 sm:p-10 md:col-span-2 md:row-span-3 ${
-            speaker === -1 ? "shadow-[inset_0_0_0_4px_var(--color-lemon)]" : ""
+            speaker === -1 ? "shadow-[inset_0_0_0_4px_var(--color-accent)]" : ""
           }`}
         >
           <p className="flex items-center gap-2 self-start rounded-full bg-black/40 px-3 py-1.5 text-sm font-medium" aria-hidden>
-            <MonitorUp className="size-4 text-lemon" />
+            <MonitorUp className="size-4 text-accent-ink" />
             crewi está compartiendo pantalla
           </p>
           <div className="hidden items-center gap-3 md:flex" aria-hidden>
@@ -168,7 +167,7 @@ function Hero({ speaker, onCreate, busy }: { speaker: number; onCreate: () => vo
             <button
               onClick={onCreate}
               disabled={busy}
-              className="inline-flex items-center gap-2 rounded-full bg-lemon px-7 py-4 text-lg font-bold text-call transition-colors duration-200 hover:bg-lemon/85 disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-full bg-accent px-7 py-4 text-lg font-bold text-on-accent press hover:bg-accent/90 disabled:opacity-60"
             >
               <Plus className="size-5" strokeWidth={2.5} aria-hidden />
               {busy ? "Creando…" : "Crear party"}
@@ -198,7 +197,7 @@ function ParticipantTile({ person, speaking }: { person: (typeof people)[number]
   return (
     <li
       className={`relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-2xl sm:aspect-square md:aspect-auto ${person.tile} transition-shadow duration-300 ${
-        speaking ? "shadow-[inset_0_0_0_4px_var(--color-lemon)]" : ""
+        speaking ? "shadow-[inset_0_0_0_4px_var(--color-accent)]" : ""
       }`}
     >
       <span className="flex size-12 items-center justify-center rounded-full bg-black/20 text-3xl sm:size-24 sm:text-6xl">{person.avatar}</span>
@@ -213,7 +212,7 @@ function ParticipantTile({ person, speaking }: { person: (typeof people)[number]
 
 function SpeakingBars() {
   return (
-    <span className="absolute top-2 right-2 flex size-8 items-center justify-center gap-[3px] rounded-full bg-lemon">
+    <span className="absolute top-2 right-2 flex size-8 items-center justify-center gap-[3px] rounded-full bg-accent">
       {[0, 180, 90].map((delay) => (
         <span key={delay} className="h-3.5 w-[3px] origin-center rounded-full bg-call animate-[speak_700ms_ease-in-out_infinite]" style={{ animationDelay: `${delay}ms` }} />
       ))}
@@ -237,7 +236,7 @@ function HowItWorks() {
         <ol className="mt-8 flex flex-col gap-4">
           {steps.map((step, i) => (
             <li key={step} className="flex items-baseline gap-4 text-lg">
-              <span className="font-display text-2xl font-extrabold text-lemon tabular-nums">{i + 1}</span>
+              <span className="font-display text-2xl font-extrabold text-accent-ink tabular-nums">{i + 1}</span>
               {step}
             </li>
           ))}
@@ -259,7 +258,7 @@ function ChatPanel() {
       <ol className="flex flex-col gap-4 text-[15px]">
         <ChatMessage from="Ana" avatar="🦊">
           <span className="mt-1 inline-flex items-center gap-2 rounded-lg bg-panel px-3 py-2 font-medium">
-            <Link2 className="size-4 text-lemon" aria-hidden />
+            <Link2 className="size-4 text-accent-ink" aria-hidden />
             <span className="tabular-nums">{location.host}/p/K7M2QX</span>
           </span>
         </ChatMessage>
@@ -332,7 +331,7 @@ function GameCopy({ name, scored, text }: { name: string; scored: boolean; text:
   return (
     <div>
       <h3 className="font-display text-3xl font-extrabold tracking-[-0.02em]">{name}</h3>
-      <p className={`mt-3 inline-block rounded-full px-3 py-1 text-sm font-semibold ${scored ? "bg-lemon text-call" : "bg-panel-2 text-ink"}`}>
+      <p className={`mt-3 inline-block rounded-full px-3 py-1 text-sm font-semibold ${scored ? "bg-accent text-on-accent" : "bg-panel-2 text-ink"}`}>
         {scored ? "Con puntos" : "Sin puntos"}
       </p>
       <p className="mt-4 max-w-[46ch] text-lg text-mute">{text}</p>
@@ -357,7 +356,7 @@ function MostLikelyDemo() {
             </span>
             <span className="w-12 font-medium">{v.name}</span>
             <span className="h-3 flex-1 overflow-hidden rounded-full bg-panel-2">
-              <span className="block h-full rounded-full bg-lemon" style={{ width: `${(v.votes / 4) * 100}%` }} />
+              <span className="block h-full rounded-full bg-accent" style={{ width: `${(v.votes / 4) * 100}%` }} />
             </span>
             <span className="w-16 text-right text-sm text-mute tabular-nums">
               {v.votes} {v.votes === 1 ? "voto" : "votos"}
@@ -462,7 +461,7 @@ function CallEnded({ onCreate, busy }: { onCreate: () => void; busy: boolean }) 
         <button
           onClick={onCreate}
           disabled={busy}
-          className="mt-2 inline-flex items-center gap-2 rounded-full bg-lemon px-7 py-4 text-lg font-bold text-call transition-colors duration-200 hover:bg-lemon/85 disabled:opacity-60"
+          className="mt-2 inline-flex items-center gap-2 rounded-full bg-accent px-7 py-4 text-lg font-bold text-on-accent press hover:bg-accent/90 disabled:opacity-60"
         >
           <Plus className="size-5" strokeWidth={2.5} aria-hidden />
           {busy ? "Creando…" : "Crear party"}
@@ -491,7 +490,7 @@ function ControlBar({ onCreate, busy }: { onCreate: () => void; busy: boolean })
         <button
           onClick={onCreate}
           disabled={busy}
-          className="ml-1 flex items-center gap-2 rounded-full bg-lemon px-4 py-2.5 text-sm font-bold text-call hover:bg-lemon/85 disabled:opacity-60 sm:px-5"
+          className="ml-1 flex items-center gap-2 rounded-full bg-accent px-4 py-2.5 text-sm font-bold text-on-accent press hover:bg-accent/90 disabled:opacity-60 sm:px-5"
         >
           <Plus className="size-5" strokeWidth={2.5} aria-hidden />
           {busy ? "Creando…" : "Crear party"}

@@ -2,7 +2,7 @@ import "leaflet/dist/leaflet.css";
 import { divIcon, type LatLngBoundsExpression } from "leaflet";
 import { useEffect, useState } from "react";
 import { Circle, MapContainer, Marker, Polyline, TileLayer, useMap, useMapEvents } from "react-leaflet";
-import { formatDistance } from "./format";
+import { formatDistance, formatPoints } from "./format";
 import type { Player } from "./party";
 
 type Point = { lat: number; lng: number };
@@ -362,7 +362,7 @@ function Results({ results, byId }: { results: NonNullable<VentanaView["results"
             <span className="text-2xl">{p?.avatar}</span>
             <span className="flex-1 truncate font-medium">{p?.name}</span>
             <span className="whitespace-nowrap text-stone-500">{formatDistance(r.distanceKm)}</span>
-            <span className="w-20 text-right font-semibold tabular-nums">+{r.points}</span>
+            <span className="w-20 text-right font-semibold tabular-nums">+{formatPoints(r.points)}</span>
           </li>
         );
       })}
@@ -383,7 +383,7 @@ function Scoreboard({ scores, byId, highlight }: { scores: NonNullable<VentanaVi
             <span className="w-5 text-right tabular-nums text-stone-400">{i + 1}</span>
             <span className="text-xl">{p?.avatar}</span>
             <span className="flex-1 truncate">{p?.name}</span>
-            <span className="font-semibold tabular-nums">{s.points}</span>
+            <span className="font-semibold tabular-nums">{formatPoints(s.points)}</span>
           </li>
         );
       })}

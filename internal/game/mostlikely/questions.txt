@@ -1,7 +1,7 @@
 # One question per line. Empty lines and lines starting with # are ignored.
 # Each line completes "¿Quién es más probable que...".
 llegue tarde a la daily
-responda mensajes a las 2 a.m.
+envíe o responda mensajes tarde
 tenga más pestañas abiertas en el browser
 se quede hablando con el micrófono en mute
 reaccione a un mensaje solo con stickers
@@ -21,6 +21,8 @@ revise un PR de 10.000 líneas en 2 minutos
 sea quien más escriba "LGTM" en el año
 use más tokens en el año
 conteste un mensaje de trabajo estando de vacaciones
-mande un mensaje al equipo a las 2 a.m.
 queme su límite de uso de tokens
 le diga "gracias" y "por favor" a la IA por miedo a que se rebele
+gane una competencia de comer panchos
+haga mejor torta o pastel
+sea buen dibujante

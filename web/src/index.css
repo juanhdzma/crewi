@@ -163,6 +163,54 @@ body {
   50% { opacity: 0.45; transform: scale(0.94); }
 }
 
+@keyframes overtake {
+  0%, 55% { background: var(--flash); }
+  25% { transform: scale(var(--lift, 1)); box-shadow: 0 8px 20px rgb(0 0 0 / var(--lift-shadow, 0)); }
+}
+
+@utility anim-overtake-up {
+  --flash: color-mix(in srgb, var(--color-ok) 18%, transparent);
+  --lift: 1.04;
+  --lift-shadow: 0.35;
+  animation: overtake 1400ms var(--ease-spring);
+}
+
+@utility anim-overtake-down {
+  --flash: color-mix(in srgb, var(--color-danger) 14%, transparent);
+  animation: overtake 1400ms var(--ease-spring);
+}
+
+@keyframes flash {
+  from { opacity: 0.9; }
+  to { opacity: 0; }
+}
+
+@keyframes party {
+  from { opacity: 0; transform: scale(0.3) rotate(-6deg); }
+}
+
+@keyframes wobble {
+  0%, 100% { transform: rotate(-2deg) scale(1); }
+  50% { transform: rotate(2deg) scale(1.05); }
+}
+
+@keyframes hop {
+  to { transform: translateY(-10px); }
+}
+
+@utility anim-flash {
+  animation: flash 600ms ease-out both;
+}
+
+@utility anim-party {
+  animation: party 700ms var(--ease-spring) both, wobble 1.4s 700ms ease-in-out infinite;
+}
+
+@utility anim-hop {
+  display: block;
+  animation: hop 600ms ease-in-out infinite alternate;
+}
+
 @utility anim-rise {
   animation: rise 700ms var(--ease-spring) both;
   animation-delay: calc(var(--i, 0) * 70ms);

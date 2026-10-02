@@ -106,7 +106,7 @@ export function RoomHeader({ code, players, label, canGoToLobby, reconnecting, o
   );
 }
 
-const presenceLabel: Record<Exclude<Presence, null>, string> = { done: "✓ listo", waiting: "pensando…", turn: "su turno" };
+const presenceLabel: Record<Exclude<Presence, null>, string> = { done: "✓ Listo", waiting: "Pensando…", turn: "Su turno" };
 const presenceColor: Record<Exclude<Presence, null>, string> = { done: "text-ok", waiting: "text-mute", turn: "text-accent-ink" };
 
 export function PeoplePanel({ players, leaderId, playerId, presence }: { players: Player[]; leaderId: string; playerId: string; presence: (id: string) => Presence }) {
@@ -212,10 +212,10 @@ export function EndedScreen({ title, text, action }: { title: string; text: stri
   );
 }
 
-export function Confetti() {
+export function Confetti({ seed = 0 }: { seed?: number }) {
   const pieces = Array.from({ length: 28 }, (_, i) => ({
-    left: (i * 37) % 100,
-    delay: ((i * 53) % 50) / 100,
+    left: (i * 37 + seed * 19) % 100,
+    delay: ((i * 53 + seed * 11) % 50) / 100,
     color: i % 5 === 0 ? "var(--color-accent)" : `var(--color-p${i % 8})`,
   }));
   return (
@@ -246,15 +246,17 @@ export function WaitingDots({ text }: { text: string }) {
 
 const stepHeights = ["h-32", "h-24", "h-16"];
 
+const podiumColumns = ["col-start-2", "col-start-1", "col-start-3"];
+
 export function Podium({ steps, players, scoreLabel }: { steps: PodiumStep[]; players: Player[]; scoreLabel: (score: number) => string }) {
   const byId = new Map(players.map((p) => [p.id, p]));
   const order = [steps[1], steps[0], steps[2]].filter(Boolean);
   return (
-    <div className="grid max-w-xl grid-cols-3 items-end gap-3">
+    <div className="mx-auto grid w-full max-w-xl grid-cols-3 items-end gap-3">
       {order.map((step) => {
         const people = step.ids.map((id) => byId.get(id)).filter((p): p is Player => !!p);
         return (
-          <div key={step.place} className={`flex flex-col items-center gap-2 text-center ${steps.length === 1 ? "col-start-2" : ""}`}>
+          <div key={step.place} className={`row-start-1 flex flex-col items-center gap-2 text-center ${podiumColumns[step.place - 1]}`}>
             <span className="flex -space-x-3">
               {people.map((p) => (
                 <Avatar key={p.id} player={p} size="lg" className="anim-pop ring-4 ring-call" />

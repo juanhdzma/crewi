@@ -11,13 +11,12 @@ import (
 )
 
 const (
-	boxHalfSizeKm  = 6.0
-	boxMaxOffsetKm = 3.5
-	boxMarginKm    = 0.5
-	scoreScaleKm   = 2.0
-	maxPoints      = 5000
-	minRadiusM     = 250
-	maxRadiusM     = 2000
+	areaRadiusKm = 5.0
+	areaMarginKm = 0.5
+	scoreScaleKm = 2.0
+	maxPoints    = 5000
+	minRadiusM   = 100
+	maxRadiusM   = 500
 
 	phaseSetup    = "setup"
 	phaseGuessing = "guessing"
@@ -28,7 +27,7 @@ const (
 type Target struct {
 	Center  Point `json:"center"`
 	RadiusM int   `json:"radiusM"`
-	bounds  Bounds
+	area    Area
 }
 
 type Result struct {
@@ -44,14 +43,15 @@ type Score struct {
 }
 
 type Game struct {
-	rng     *rand.Rand
-	phase   string
-	targets map[string]*Target
-	order   []string
-	turn    int
-	guesses map[string]Point
-	results []Result
-	scores  map[string]int
+	rng       *rand.Rand
+	phase     string
+	targets   map[string]*Target
+	order     []string
+	turn      int
+	guesses   map[string]Point
+	results   []Result
+	scores    map[string]int
+	finalists []string
 }
 
 func New(rng *rand.Rand) *Game {
@@ -101,9 +101,9 @@ func (g *Game) setLocation(playerID string, payload json.RawMessage) error {
 	if req.RadiusM > 0 {
 		center = offset(center, g.rng.Float64()*0.9*float64(req.RadiusM)/1000, g.bearing())
 	}
-	maxOffset := min(boxMaxOffsetKm, boxHalfSizeKm-float64(req.RadiusM)/1000-boxMarginKm)
-	boxCenter := offset(center, g.rng.Float64()*maxOffset, g.bearing())
-	g.targets[playerID] = &Target{Center: center, RadiusM: req.RadiusM, bounds: boxAround(boxCenter, boxHalfSizeKm)}
+	maxOffset := areaRadiusKm - float64(req.RadiusM)/1000 - areaMarginKm
+	area := Area{Center: offset(center, g.rng.Float64()*maxOffset, g.bearing()), RadiusKm: areaRadiusKm}
+	g.targets[playerID] = &Target{Center: center, RadiusM: req.RadiusM, area: area}
 	return nil
 }
 
@@ -126,7 +126,7 @@ func (g *Game) start(t game.Table) error {
 func (g *Game) guess(t game.Table, playerID string, payload json.RawMessage) error {
 	var p Point
 	target := g.targets[g.order[g.turn]]
-	if playerID == g.order[g.turn] || json.Unmarshal(payload, &p) != nil || !target.bounds.contains(p) {
+	if playerID == g.order[g.turn] || json.Unmarshal(payload, &p) != nil || !target.area.contains(p) {
 		return game.ErrInvalidAction
 	}
 	g.guesses[playerID] = p
@@ -165,9 +165,31 @@ func (g *Game) next(t game.Table) {
 	}
 	if g.turn == len(g.order) {
 		g.phase = phasePodium
+		g.finalists = g.pickFinalists(t)
 		return
 	}
 	g.phase = phaseGuessing
+}
+
+// Finalists are shuffled once on the server so every screen shows the same
+// lineup and its order gives away nothing about the ranking.
+func (g *Game) pickFinalists(t game.Table) []string {
+	scores := g.standings(t)
+	ids := make([]string, 0, 3)
+	for _, s := range scores[:min(3, len(scores))] {
+		ids = append(ids, s.PlayerID)
+	}
+	g.rng.Shuffle(len(ids), func(i, j int) { ids[i], ids[j] = ids[j], ids[i] })
+	return ids
+}
+
+func (g *Game) standings(t game.Table) []Score {
+	var scores []Score
+	for _, pl := range t.Players {
+		scores = append(scores, Score{PlayerID: pl.ID, Points: g.scores[pl.ID]})
+	}
+	slices.SortStableFunc(scores, func(a, b Score) int { return b.Points - a.Points })
+	return scores
 }
 
 func (g *Game) bearing() float64 { return g.rng.Float64() * 2 * math.Pi }
@@ -183,12 +205,13 @@ type View struct {
 	TurnPlayerID string   `json:"turnPlayerId,omitempty"`
 	Turn         int      `json:"turn"`
 	Turns        int      `json:"turns"`
-	Bounds       *Bounds  `json:"bounds,omitempty"`
+	Area         *Area    `json:"area,omitempty"`
 	Guessed      []string `json:"guessed,omitempty"`
 	MyGuess      *Point   `json:"myGuess,omitempty"`
 	Target       *Target  `json:"target,omitempty"`
 	Results      []Result `json:"results,omitempty"`
 	Scores       []Score  `json:"scores,omitempty"`
+	Finalists    []string `json:"finalists,omitempty"`
 }
 
 func (g *Game) View(t game.Table, playerID string) any {
@@ -203,17 +226,15 @@ func (g *Game) View(t game.Table, playerID string) any {
 		return v
 	}
 
-	for _, pl := range t.Players {
-		v.Scores = append(v.Scores, Score{PlayerID: pl.ID, Points: g.scores[pl.ID]})
-	}
-	slices.SortStableFunc(v.Scores, func(a, b Score) int { return b.Points - a.Points })
+	v.Scores = g.standings(t)
 	if g.phase == phasePodium {
+		v.Finalists = g.finalists
 		return v
 	}
 
 	target := g.targets[g.order[g.turn]]
 	v.TurnPlayerID = g.order[g.turn]
-	v.Bounds = &target.bounds
+	v.Area = &target.area
 	for _, pl := range t.Players {
 		if _, ok := g.guesses[pl.ID]; ok {
 			v.Guessed = append(v.Guessed, pl.ID)

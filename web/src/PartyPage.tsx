@@ -8,7 +8,7 @@ import { ActionError, Connecting, EndedScreen, PeoplePanel, RoomHeader } from ".
 import { presenceOf } from "./presence";
 import { Button } from "./ui";
 import { useParty } from "./useParty";
-import { Ventana, type VentanaView } from "./Ventana";
+import { Ventana, VentanaStandings, type VentanaView } from "./Ventana";
 
 export function PartyPage({ code }: { code: string }) {
   const [info, setInfo] = useState<PartyInfo | null | undefined>(undefined);
@@ -120,7 +120,10 @@ function Room({ state, playerId, reconnecting, actionError, send, onLeave }: Roo
               {content}
               <ActionError message={actionError} />
             </div>
-            <PeoplePanel players={state.players} leaderId={state.leaderId} playerId={playerId} presence={(id) => presenceOf(game, id)} />
+            <div className="flex flex-col gap-6">
+              <PeoplePanel players={state.players} leaderId={state.leaderId} playerId={playerId} presence={(id) => presenceOf(game, id)} />
+              {game.id === "ventana" && <VentanaStandings view={game.view as VentanaView} players={state.players} playerId={playerId} />}
+            </div>
           </div>
         ) : (
           <div className="flex flex-col gap-4">

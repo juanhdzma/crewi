@@ -5,6 +5,7 @@ import (
 	"errors"
 	"math"
 	"math/rand/v2"
+	"slices"
 	"testing"
 
 	"github.com/juanhdzma/crewi/internal/game"
@@ -54,12 +55,12 @@ func TestCircleHidesExactPointButContainsIt(t *testing.T) {
 		if distanceKm(target.Center, bogota) > float64(maxRadiusM)/1000 {
 			t.Fatalf("seed %d: real point outside the circle", seed)
 		}
-		if !target.bounds.contains(bogota) {
-			t.Fatalf("seed %d: real point outside the map bounds", seed)
+		if !target.area.contains(bogota) {
+			t.Fatalf("seed %d: real point outside the guess area", seed)
 		}
 		edge := offset(target.Center, float64(target.RadiusM)/1000, math.Pi/2)
-		if !target.bounds.contains(edge) {
-			t.Fatalf("seed %d: circle edge outside the map bounds", seed)
+		if !target.area.contains(edge) {
+			t.Fatalf("seed %d: circle edge outside the guess area", seed)
 		}
 	}
 }
@@ -69,8 +70,8 @@ func TestSetLocationValidation(t *testing.T) {
 	for _, p := range []map[string]any{
 		{"lat": 95, "lng": 0},
 		{"lat": 0, "lng": 200},
-		{"lat": 0, "lng": 0, "radiusM": 100},
-		{"lat": 0, "lng": 0, "radiusM": 5000},
+		{"lat": 0, "lng": 0, "radiusM": 50},
+		{"lat": 0, "lng": 0, "radiusM": 1000},
 	} {
 		if act(t, g, "beto", "setLocation", p) == nil {
 			t.Errorf("accepted %v", p)
@@ -93,14 +94,14 @@ func TestFullGame(t *testing.T) {
 	for turn := range 2 {
 		v := g.View(table, "caro").(View)
 		turnPlayer := v.TurnPlayerID
-		if v.Phase != phaseGuessing || v.Target != nil || v.Bounds == nil {
-			t.Fatalf("turn %d: guessing view leaks target or lacks bounds: %+v", turn, v)
+		if v.Phase != phaseGuessing || v.Target != nil || v.Area == nil {
+			t.Fatalf("turn %d: guessing view leaks target or lacks area: %+v", turn, v)
 		}
 		if act(t, g, turnPlayer, "guess", g.targets[turnPlayer].Center) == nil {
 			t.Fatal("turn player could guess their own location")
 		}
 		if act(t, g, "caro", "guess", Point{Lat: -80, Lng: 0}) == nil {
-			t.Fatal("guess outside the bounds was accepted")
+			t.Fatal("guess outside the area was accepted")
 		}
 
 		for _, id := range []string{"ana", "beto", "caro"} {
@@ -118,6 +119,13 @@ func TestFullGame(t *testing.T) {
 	v := g.View(table, "ana").(View)
 	if v.Phase != phasePodium || v.Scores[0].PlayerID != "caro" || v.Scores[0].Points != 2*maxPoints {
 		t.Fatalf("podium = %+v", v)
+	}
+	if !slices.Equal(v.Finalists, g.View(table, "beto").(View).Finalists) {
+		t.Fatal("players see different finalist lineups")
+	}
+	top := []string{v.Scores[0].PlayerID, v.Scores[1].PlayerID, v.Scores[2].PlayerID}
+	if len(v.Finalists) != 3 || !slices.Equal(slices.Sorted(slices.Values(v.Finalists)), slices.Sorted(slices.Values(top))) {
+		t.Fatalf("finalists %v are not the top three %v", v.Finalists, top)
 	}
 }
 

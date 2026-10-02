@@ -18,7 +18,7 @@ it("combines the turn with totals and shows who moved", () => {
     ["beto", 2, 0],
     ["caro", 3, -1],
   ]);
-  expect(rows[1].turn).toEqual({ distanceKm: 0, points: 5000, medal: 1 });
+  expect(rows[1].turn).toEqual({ distanceKm: 0, points: 5000 });
   expect(rows[2].turn).toBeUndefined();
 });
 

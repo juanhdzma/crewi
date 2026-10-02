@@ -1,19 +1,19 @@
 import "leaflet/dist/leaflet.css";
-import { divIcon, type LatLngBoundsExpression } from "leaflet";
+import { divIcon, latLng } from "leaflet";
 import { Check, ChevronRight, LocateFixed } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Circle, MapContainer, Marker, Polyline, TileLayer, useMap, useMapEvents } from "react-leaflet";
+import { FinalReveal } from "./FinalReveal";
 import { formatDistance, formatPoints } from "./format";
 import { escapeHtml } from "./html";
 import { partyCodeFromPath, photoUrl, type Player } from "./party";
-import { AnswerProgress, Avatar, Confetti, Podium, ProgressDots } from "./party-ui";
+import { AnswerProgress, Avatar, ProgressDots } from "./party-ui";
 import { personColor } from "./people";
-import { podiumSteps } from "./podium";
 import { standings } from "./standings";
 import { Button } from "./ui";
 
 type Point = { lat: number; lng: number };
-type Bounds = { south: number; west: number; north: number; east: number };
+type Area = { center: Point; radiusKm: number };
 type Target = { center: Point; radiusM: number };
 type Result = { playerId: string; guess: Point; distanceKm: number; points: number };
 
@@ -24,12 +24,13 @@ export type VentanaView = {
   turnPlayerId?: string;
   turn: number;
   turns: number;
-  bounds?: Bounds;
+  area?: Area;
   guessed?: string[];
   myGuess?: Point;
   target?: Target;
   results?: Result[];
   scores?: { playerId: string; points: number }[];
+  finalists?: string[];
 };
 
 type Props = {
@@ -40,8 +41,8 @@ type Props = {
   send: (type: string, payload?: unknown) => void;
 };
 
-const radiusOptions = [500, 1000, 2000];
-const mapHeight = "h-[min(64vh,640px)] min-h-80";
+const radiusOptions = [100, 200, 500];
+const mapHeight = "h-[min(70vh,720px)] min-h-80";
 const locateZoom = 15;
 const flyDurationS = 1;
 
@@ -53,11 +54,11 @@ const tiles = {
 
 const hints = [
   "Describe lo primero que ves al asomarte.",
-  "¿Qué se escucha afuera ahora mismo?",
-  "Da una pista del clima sin decir la ciudad.",
-  "Nombra algo típico de tu barrio, sin decir su nombre.",
   "¿En qué piso estás? ¿Qué tan lejos alcanzas a ver?",
   "¿Hay montañas, mar o edificios a lo lejos?",
+  "¿Hacia dónde da tu ventana: montañas, centro, aeropuerto…?",
+  "¿Es una zona residencial, comercial o de oficinas?",
+  "Si caminaras 5 minutos desde tu casa, ¿qué encontrarías?",
 ];
 
 export function Ventana({ view, players, playerId, isLeader, send }: Props) {
@@ -67,80 +68,77 @@ export function Ventana({ view, players, playerId, isLeader, send }: Props) {
   useEffect(() => setPending(null), [view.turn, view.phase]);
 
   if (view.phase === "podium") return <FinalPodium view={view} players={players} isLeader={isLeader} send={send} />;
-  if (view.phase === "setup") return <Setup view={view} players={players} isLeader={isLeader} send={send} />;
+  if (view.phase === "setup") return <Setup view={view} isLeader={isLeader} send={send} />;
 
   const isMyTurn = view.turnPlayerId === playerId;
   const turnPlayer = byId.get(view.turnPlayerId ?? "");
   const me = byId.get(playerId);
   const guessers = players.filter((p) => p.online && p.id !== view.turnPlayerId);
   const guess = pending ?? view.myGuess;
+  const area = view.area;
   const title = isMyTurn ? "Te toca: muestra tu ventana en la llamada" : `¿Dónde está la ventana de ${turnPlayer?.name ?? "alguien"}?`;
-  const revealButton = isLeader && view.phase === "guessing" && (
-    <div>
-      <Button variant="secondary" onClick={() => send("reveal")}>
-        Revelar ya
-      </Button>
-    </div>
+  const nextButton = isLeader && view.phase === "revealed" && (
+    <Button onClick={() => send("next")}>{view.turn === view.turns - 1 ? "Ver resultado final" : "Siguiente turno"}</Button>
   );
+
+  function pick(p: Point) {
+    if (area && latLng(area.center).distanceTo(p) <= area.radiusKm * 1000) setPending(p);
+  }
 
   return (
     <section className="flex flex-col gap-5">
-      <div className="flex flex-col gap-3">
-        <ProgressDots current={view.turn} total={view.turns} label="Turno" />
-        <h2 className="flex items-center gap-3 text-2xl font-extrabold tracking-tight text-balance sm:text-3xl">
-          {!isMyTurn && turnPlayer && <Avatar player={turnPlayer} />}
-          {title}
-        </h2>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="flex flex-col gap-3">
+          <ProgressDots current={view.turn} total={view.turns} label="Turno" />
+          <h2 className="flex items-center gap-3 text-2xl font-extrabold tracking-tight text-balance sm:text-3xl">
+            {!isMyTurn && turnPlayer && <Avatar player={turnPlayer} />}
+            {title}
+          </h2>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {isLeader && view.phase === "guessing" && (
+            <Button variant="secondary" onClick={() => send("reveal")}>
+              Revelar ya
+            </Button>
+          )}
+          {nextButton}
+        </div>
       </div>
 
       {view.phase === "guessing" && isMyTurn ? (
         <HintCard>
           <AnswerProgress people={guessers} done={view.guessed ?? []} verb="adivinaron" />
-          {revealButton}
         </HintCard>
       ) : (
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start">
-          <GameMap bounds={view.bounds} onClick={view.phase === "guessing" ? setPending : undefined}>
+        <>
+          {view.phase === "guessing" && (
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+              <p className="text-mute">Toca dentro del círculo donde crees que está la ventana.</p>
+              <Button
+                onClick={() => {
+                  if (pending) send("guess", pending);
+                  setPending(null);
+                }}
+                disabled={!pending}
+              >
+                {view.myGuess ? "Cambiar mi respuesta" : "Confirmar respuesta"}
+              </Button>
+              {view.myGuess && !pending && (
+                <span className="flex items-center gap-1 text-sm font-semibold text-ok">
+                  <Check className="size-4" aria-hidden />
+                  Respuesta enviada
+                </span>
+              )}
+            </div>
+          )}
+          <GameMap area={area} onClick={view.phase === "guessing" ? pick : undefined}>
+            {area && <Circle center={area.center} radius={area.radiusKm * 1000} pathOptions={{ color: "#ffffff", weight: 2, dashArray: "8 8", fill: false }} interactive={false} />}
             {view.phase === "guessing" && guess && me && <Marker position={guess} icon={playerPin(me, "Tú")} interactive={false} />}
             {view.phase === "revealed" && view.target && <RevealLayers target={view.target} results={view.results ?? []} byId={byId} playerId={playerId} />}
           </GameMap>
-          <aside className="flex flex-col gap-5">
-            {view.phase === "guessing" ? (
-              <>
-                <div className="flex flex-col items-start gap-2">
-                  <p className="text-mute">Toca el mapa donde crees que está la ventana.</p>
-                  <Button
-                    onClick={() => {
-                      if (pending) send("guess", pending);
-                      setPending(null);
-                    }}
-                    disabled={!pending}
-                  >
-                    {view.myGuess ? "Cambiar mi respuesta" : "Confirmar respuesta"}
-                  </Button>
-                  {view.myGuess && !pending && (
-                    <span className="flex items-center gap-1 text-sm font-semibold text-ok">
-                      <Check className="size-4" aria-hidden />
-                      Respuesta enviada
-                    </span>
-                  )}
-                </div>
-                <AnswerProgress people={guessers} done={view.guessed ?? []} verb="adivinaron" />
-                {revealButton}
-              </>
-            ) : (
-              isLeader && (
-                <div>
-                  <Button size="lg" onClick={() => send("next")}>
-                    {view.turn === view.turns - 1 ? "Ver resultado final" : "Siguiente turno"}
-                  </Button>
-                </div>
-              )
-            )}
-            <StandingsTable view={view} byId={byId} playerId={playerId} />
-          </aside>
-        </div>
+        </>
       )}
+
     </section>
   );
 }
@@ -165,72 +163,129 @@ function HintCard({ children }: { children: React.ReactNode }) {
   );
 }
 
-function StandingsTable({ view, byId, playerId }: { view: VentanaView; byId: Map<string, Player>; playerId: string }) {
-  const revealed = view.phase === "revealed";
-  const rows = standings(view.scores ?? [], revealed ? (view.results ?? []) : []);
+const standingRowPx = 56;
+const countUpMs = 1100;
+
+export function VentanaStandings({ view, players, playerId }: { view: VentanaView; players: Player[]; playerId: string }) {
+  if (view.phase !== "revealed") return null;
+  if (view.turn === view.turns - 1) {
+    return (
+      <aside className="rounded-2xl bg-panel p-4" aria-label="Puntajes">
+        <h2 className="mb-1 font-bold">Puntajes</h2>
+        <p className="text-sm text-mute">Se guardan para la revelación final.</p>
+      </aside>
+    );
+  }
+  return <TurnStandings key={view.turn} view={view} players={players} playerId={playerId} />;
+}
+
+function TurnStandings({ view, players, playerId }: { view: VentanaView; players: Player[]; playerId: string }) {
+  const [settled, setSettled] = useState(false);
+
+  useEffect(() => {
+    let frame = requestAnimationFrame(() => {
+      frame = requestAnimationFrame(() => setSettled(true));
+    });
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
+  const byId = new Map(players.map((p) => [p.id, p]));
+  const scores = view.scores ?? [];
+  const rows = standings(scores, view.results ?? []);
+  const gained = new Map(rows.map((r) => [r.playerId, r.turn?.points ?? 0]));
+  const before = standings(scores.map((s) => ({ ...s, points: s.points - gained.get(s.playerId)! })), []);
+  const position = new Map((settled ? rows : before).map((r, i) => [r.playerId, i]));
   return (
-    <div className="rounded-2xl bg-panel p-4">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="text-left text-xs text-mute">
-            <th className="pb-2 font-semibold">#</th>
-            <th className="pb-2 font-semibold">Jugador</th>
-            {revealed && <th className="pb-2 text-right font-semibold">Este turno</th>}
-            <th className="pb-2 text-right font-semibold">Total</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-line">
-          {rows.map((r) => {
+    <aside className="rounded-2xl bg-panel p-4" aria-label="Puntajes">
+      <h2 className="mb-1 font-bold">Puntajes del turno</h2>
+      {/* Rows keep a stable DOM order and move by `top`, so the overtakes animate. */}
+      <ol className="relative" style={{ height: rows.length * standingRowPx }}>
+        {[...rows]
+          .sort((x, y) => x.playerId.localeCompare(y.playerId))
+          .map((r) => {
             const p = byId.get(r.playerId);
+            const overtake = r.move !== 0 ? (r.move > 0 ? "z-10 anim-overtake-up" : "anim-overtake-down") : "";
             return (
-              <tr key={r.playerId} className={r.playerId === playerId ? "font-bold" : ""}>
-                <td className="py-2 pr-2 whitespace-nowrap tabular-nums">
-                  <span className="text-mute">{r.rank}</span>
-                  {revealed && r.move !== 0 && (
-                    <span className={`ml-1 text-xs font-extrabold ${r.move > 0 ? "text-ok" : "text-danger"}`}>
-                      {r.move > 0 ? `▲${r.move}` : `▼${-r.move}`}
+              <li
+                key={r.playerId}
+                className={`absolute inset-x-0 flex items-center gap-2 rounded-xl px-1 text-sm ${overtake} ${r.playerId === playerId ? "font-bold" : ""}`}
+                style={{ top: position.get(r.playerId)! * standingRowPx, height: standingRowPx, transition: "top 700ms var(--ease-spring) 450ms" }}
+              >
+                <span className="w-4 text-right text-mute tabular-nums">{r.rank}</span>
+                <Move move={r.move} />
+                {p && <Avatar player={p} size="sm" />}
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span className="truncate">{p?.name ?? "?"}</span>
+                  {r.playerId === view.turnPlayerId ? (
+                    <span className="text-xs text-accent-ink">presentó</span>
+                  ) : r.turn ? (
+                    <span className="text-xs font-normal text-mute">
+                      {formatDistance(r.turn.distanceKm)} <span className="font-bold text-ok">+{formatPoints(r.turn.points)}</span>
                     </span>
+                  ) : (
+                    <span className="text-xs text-mute">sin respuesta</span>
                   )}
-                </td>
-                <td className="py-2">
-                  <span className="flex min-w-0 items-center gap-2">
-                    {p && <Avatar player={p} size="sm" />}
-                    <span className="truncate">{p?.name ?? "?"}</span>
-                    {r.playerId === view.turnPlayerId && <span className="text-xs text-accent-ink">presentó</span>}
-                  </span>
-                </td>
-                {revealed && (
-                  <td className="py-2 text-right whitespace-nowrap">
-                    {r.turn ? (
-                      <>
-                        {r.turn.medal && <span aria-label={`Puesto ${r.turn.medal} del turno`}>{["🥇", "🥈", "🥉"][r.turn.medal - 1]} </span>}
-                        <span className="text-mute">{formatDistance(r.turn.distanceKm)}</span>{" "}
-                        <span className="font-bold text-ok tabular-nums">+{formatPoints(r.turn.points)}</span>
-                      </>
-                    ) : (
-                      <span className="text-mute">–</span>
-                    )}
-                  </td>
-                )}
-                <td className="py-2 text-right font-bold tabular-nums">{formatPoints(r.total)}</td>
-              </tr>
+                </span>
+                <span className="font-bold tabular-nums">
+                  <CountUp from={r.total - gained.get(r.playerId)!} value={r.total} />
+                </span>
+              </li>
             );
           })}
-        </tbody>
-      </table>
-    </div>
+      </ol>
+    </aside>
   );
 }
 
-function Setup({ view, players, isLeader, send }: Omit<Props, "playerId">) {
-  const [step, setStep] = useState<1 | 2>(1);
+function CountUp({ from: initial, value }: { from: number; value: number }) {
+  const [shown, setShown] = useState(initial);
+  const from = useRef(initial);
+
+  useEffect(() => {
+    const start = from.current;
+    if (start === value || matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      from.current = value;
+      setShown(value);
+      return;
+    }
+    const t0 = performance.now();
+    let frame = 0;
+    const step = (now: number) => {
+      const k = Math.min(1, (now - t0) / countUpMs);
+      from.current = Math.round(start + (value - start) * (1 - (1 - k) ** 3));
+      setShown(from.current);
+      if (k < 1) frame = requestAnimationFrame(step);
+    };
+    frame = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(frame);
+  }, [value]);
+
+  return formatPoints(shown);
+}
+
+function Move({ move }: { move: number }) {
+  if (move === 0) return <span className="w-7 text-center text-xs text-mute" aria-hidden>–</span>;
+  const up = move > 0;
+  return (
+    <span className={`w-7 text-xs font-extrabold tabular-nums ${up ? "text-ok" : "text-danger"}`} aria-label={up ? `Subió ${move}` : `Bajó ${-move}`}>
+      {up ? `▲${move}` : `▼${-move}`}
+    </span>
+  );
+}
+
+type SetupStep = "choose" | "pin" | "precision" | "done";
+
+function Setup({ view, isLeader, send }: Omit<Props, "playerId" | "players">) {
+  const current = view.myLocation;
+  const [step, setStep] = useState<SetupStep>(current ? "done" : "choose");
   const [point, setPoint] = useState<Point | null>(null);
   const [locateTarget, setLocateTarget] = useState<Point | null>(null);
-  const [radiusM, setRadiusM] = useState(1000);
+  const [radiusM, setRadiusM] = useState(0);
   const [geoError, setGeoError] = useState<string | null>(null);
   const [locating, setLocating] = useState(false);
+  const [flying, setFlying] = useState(false);
+  const landed = useCallback(() => setFlying(false), []);
   const ready = view.ready ?? [];
-  const current = view.myLocation;
 
   function locateMe() {
     if (!navigator.geolocation) {
@@ -240,9 +295,12 @@ function Setup({ view, players, isLeader, send }: Omit<Props, "playerId">) {
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        setLocateTarget({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        const p = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setLocateTarget(p);
+        setFlying(true);
         setGeoError(null);
         setLocating(false);
+        place(p);
       },
       () => {
         setGeoError("No pudimos obtener tu ubicación. Márcala en el mapa.");
@@ -252,99 +310,141 @@ function Setup({ view, players, isLeader, send }: Omit<Props, "playerId">) {
     );
   }
 
-  return (
-    <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start">
-      <GameMap locateTarget={locateTarget} onArrive={setPoint} onClick={step === 1 ? setPoint : undefined}>
-        {point && (
-          <>
-            {step === 2 && radiusM > 0 && <Circle center={point} radius={radiusM} pathOptions={{ color: "#ffffff", weight: 3, fillOpacity: 0.15 }} interactive={false} />}
-            <Marker position={point} icon={targetIcon} interactive={false} />
-          </>
-        )}
-      </GameMap>
-      <aside className="flex flex-col gap-5">
-        <ol className="flex flex-wrap items-center gap-2 text-sm font-semibold">
-          <li className={`flex items-center gap-1.5 rounded-full px-3 py-1 ${step === 1 ? "bg-accent text-on-accent" : "bg-panel-2"}`}>
-            {step === 2 ? <Check className="size-4" aria-hidden /> : "1"} Marca tu ventana
-          </li>
-          <li className={`rounded-full px-3 py-1 ${step === 2 ? "bg-accent text-on-accent" : "bg-panel-2 text-mute"}`}>2 Precisión</li>
-        </ol>
+  function place(p: Point) {
+    setPoint(p);
+    setStep("precision");
+  }
 
-        {step === 1 ? (
-          <div className="flex flex-col gap-4">
-            <h2 className="text-2xl font-extrabold tracking-tight">¿Dónde está tu ventana?</h2>
-            <p className="text-mute">Usa tu ubicación o toca el mapa. Nadie la ve hasta que sea tu turno.</p>
-            <div>
-              <Button variant="secondary" onClick={locateMe} disabled={locating}>
-                <LocateFixed className="size-5" aria-hidden />
-                {locating ? "Buscando…" : "Usar mi ubicación"}
-              </Button>
-            </div>
-            {geoError && <p className="text-sm font-semibold text-danger">{geoError}</p>}
-            <div>
-              <Button onClick={() => setStep(2)} disabled={!point}>
-                Siguiente
-                <ChevronRight className="size-5" aria-hidden />
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-3">
-            <h2 className="text-2xl font-extrabold tracking-tight">¿Qué tan precisa?</h2>
-            <PrecisionOption selected={radiusM === 0} title="Exacta" text="Más difícil de adivinar, más puntos en juego." onSelect={() => setRadiusM(0)} />
-            <PrecisionOption
-              selected={radiusM > 0}
-              title="Zona aproximada"
-              text="Nadie ve tu punto exacto: el círculo se corre al azar y tu ubicación exacta no se guarda."
-              onSelect={() => setRadiusM((r) => r || 1000)}
-            >
-              {radiusM > 0 && (
-                <span className="mt-2 flex flex-wrap gap-2">
-                  {radiusOptions.map((r) => (
-                    <button
-                      key={r}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setRadiusM(r);
-                      }}
-                      aria-pressed={radiusM === r}
-                      className={`rounded-full px-3 py-1 text-sm font-semibold ${radiusM === r ? "bg-accent text-on-accent" : "bg-panel-2"}`}
-                    >
-                      {formatDistance(r / 1000)}
-                    </button>
-                  ))}
-                </span>
-              )}
-            </PrecisionOption>
-            <div className="flex flex-wrap gap-2 pt-1">
-              <Button variant="ghost" onClick={() => setStep(1)}>
-                Atrás
-              </Button>
-              <Button onClick={() => point && send("setLocation", { ...point, radiusM })}>{current ? "Actualizar ubicación" : "Confirmar"}</Button>
-            </div>
-            {current && (
+  function restart() {
+    setPoint(null);
+    setLocateTarget(null);
+    setGeoError(null);
+    setStep("choose");
+  }
+
+  const shown = step === "done" ? current && { point: current.center, radiusM: current.radiusM } : point && { point, radiusM: step === "pin" ? 0 : radiusM };
+
+  return (
+    <section className="flex flex-col gap-5">
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
+        <div className="flex flex-col gap-2">
+          <h2 className="text-2xl font-extrabold tracking-tight sm:text-3xl">{step === "done" ? "Tu ventana está lista" : "¿Dónde está tu ventana?"}</h2>
+          {step === "pin" && <p className="text-mute">Toca el mapa donde está tu ventana.</p>}
+          {step === "done" && current && (
+            <div className="flex flex-wrap items-center gap-3">
               <span className="flex items-center gap-1 text-sm font-semibold text-ok">
                 <Check className="size-4" aria-hidden />
-                Ubicación guardada{current.radiusM ? ` (zona de ${formatDistance(current.radiusM / 1000)})` : ""}
+                Ubicación guardada{current.radiusM ? ` (zona de ${formatDistance(current.radiusM / 1000)})` : " (exacta)"}
               </span>
-            )}
-          </div>
-        )}
-
-        <div className="flex flex-col gap-4 border-t border-line pt-5">
-          <AnswerProgress people={players.filter((p) => p.online)} done={ready} verb="listos" />
-          {isLeader ? (
-            <div>
-              <Button size="lg" onClick={() => send("start")} disabled={ready.length < 2}>
-                Empezar ({ready.length} turnos)
+              <Button variant="secondary" size="sm" onClick={restart}>
+                Cambiar
               </Button>
             </div>
+          )}
+        </div>
+        <div className="flex flex-wrap items-center gap-4">
+          {isLeader ? (
+            <Button size="lg" onClick={() => send("start")} disabled={ready.length < 2}>
+              Empezar ({ready.length} turnos)
+            </Button>
           ) : (
             <p className="text-sm text-mute">El anfitrión empieza cuando estén listos.</p>
           )}
         </div>
-      </aside>
+      </div>
+
+      <GameMap locateTarget={locateTarget} onArrive={landed} onClick={step === "pin" ? place : undefined}>
+        {shown && (
+          <>
+            {shown.radiusM > 0 && !flying && <Circle center={shown.point} radius={shown.radiusM} pathOptions={{ color: "#ffffff", weight: 3, fillOpacity: 0.15 }} interactive={false} />}
+            <Marker position={shown.point} icon={targetIcon} interactive={false} />
+          </>
+        )}
+      </GameMap>
+
+      <LockedModal open={step === "choose"} title="¿Dónde está tu ventana?">
+        <p className="text-mute">Nadie la ve hasta que sea tu turno.</p>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={locateMe} disabled={locating}>
+            <LocateFixed className="size-5" aria-hidden />
+            {locating ? "Buscando…" : "Usar mi ubicación"}
+          </Button>
+          <Button variant="secondary" onClick={() => setStep("pin")} disabled={locating}>
+            Marcarla en el mapa
+          </Button>
+        </div>
+        {geoError && <p className="text-sm font-semibold text-danger">{geoError}</p>}
+      </LockedModal>
+
+      <LockedModal open={step === "precision"} title="¿Qué tan precisa?">
+        <PrecisionOption selected={radiusM === 0} title="Exacta" text="Más difícil de adivinar, más puntos en juego." onSelect={() => setRadiusM(0)} />
+        <PrecisionOption
+          selected={radiusM > 0}
+          title="Zona aproximada"
+          text="Nadie ve tu punto exacto: el círculo se corre al azar y tu ubicación exacta no se guarda."
+          onSelect={() => setRadiusM((r) => r || 200)}
+        >
+          {radiusM > 0 && (
+            <span className="mt-2 flex flex-wrap gap-2">
+              {radiusOptions.map((r) => (
+                <button
+                  key={r}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setRadiusM(r);
+                  }}
+                  aria-pressed={radiusM === r}
+                  className={`rounded-full px-3 py-1 text-sm font-semibold ${radiusM === r ? "bg-accent text-on-accent" : "bg-panel-2"}`}
+                >
+                  {formatDistance(r / 1000)}
+                </button>
+              ))}
+            </span>
+          )}
+        </PrecisionOption>
+        <div className="flex flex-wrap justify-end gap-2 pt-1">
+          <Button variant="ghost" onClick={() => setStep("pin")}>
+            Atrás
+          </Button>
+          <Button
+            onClick={() => {
+              if (!point) return;
+              send("setLocation", { ...point, radiusM });
+              setStep("done");
+            }}
+          >
+            Confirmar
+          </Button>
+        </div>
+      </LockedModal>
     </section>
+  );
+}
+
+// Browsers may close a modal dialog on a repeated Escape even when cancel is
+// prevented, so it is reopened while it should stay open.
+function LockedModal({ open, title, children }: { open: boolean; title: string; children: React.ReactNode }) {
+  const ref = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    const dialog = ref.current;
+    if (open && !dialog?.open) dialog?.showModal();
+    if (!open && dialog?.open) dialog.close();
+  }, [open]);
+
+  return (
+    <dialog
+      ref={ref}
+      aria-label={title}
+      onCancel={(e) => e.preventDefault()}
+      onClose={() => open && ref.current?.showModal()}
+      className="m-auto w-[min(100%-2rem,32rem)] rounded-3xl bg-panel p-0 text-ink backdrop:bg-black/60"
+    >
+      <div className="flex flex-col gap-4 p-5 sm:p-6">
+        <h3 className="text-2xl font-extrabold tracking-tight">{title}</h3>
+        {children}
+      </div>
+    </dialog>
   );
 }
 
@@ -376,54 +476,39 @@ function PrecisionOption({ selected, title, text, onSelect, children }: Precisio
 }
 
 function FinalPodium({ view, players, isLeader, send }: Omit<Props, "playerId">) {
-  const byId = new Map(players.map((p) => [p.id, p]));
-  const { podium, rest } = podiumSteps((view.scores ?? []).map((s) => ({ id: s.playerId, score: s.points })));
   return (
-    <section className="relative flex flex-col gap-6 overflow-hidden rounded-3xl bg-panel p-6 sm:p-10">
-      <Confetti />
-      <h2 className="text-3xl font-extrabold tracking-tight">Resultado final</h2>
-      <Podium steps={podium} players={players} scoreLabel={(n) => `${formatPoints(n)} pts`} />
-      {rest.length > 0 && (
-        <ol className="flex max-w-xl flex-col divide-y divide-line">
-          {rest.map((r, i) => {
-            const p = byId.get(r.id);
-            return (
-              <li key={r.id} className="flex items-center gap-3 py-2">
-                <span className="w-5 text-right text-mute tabular-nums">{podium.length + i + 1}</span>
-                {p && <Avatar player={p} size="sm" />}
-                <span className="flex-1 truncate">{p?.name}</span>
-                <span className="font-bold tabular-nums">{formatPoints(r.score)}</span>
-              </li>
-            );
-          })}
-        </ol>
-      )}
-      {isLeader && (
-        <div>
+    <FinalReveal
+      ranked={(view.scores ?? []).map((s) => ({ id: s.playerId, score: s.points }))}
+      finalistIds={view.finalists ?? []}
+      players={players}
+      header={
+        isLeader ? (
           <Button size="lg" onClick={() => send("endGame")}>
             Volver al lobby
           </Button>
-        </div>
-      )}
-    </section>
+        ) : (
+          <p className="text-mute">Esperando al anfitrión…</p>
+        )
+      }
+    />
   );
 }
 
 type GameMapProps = {
-  bounds?: Bounds;
+  area?: Area;
   locateTarget?: Point | null;
-  onArrive?: (p: Point) => void;
+  onArrive?: () => void;
   onClick?: (p: Point) => void;
   children: React.ReactNode;
 };
 
-function GameMap({ bounds, locateTarget = null, onArrive, onClick, children }: GameMapProps) {
+function GameMap({ area, locateTarget = null, onArrive, onClick, children }: GameMapProps) {
   return (
     <div className={`${mapHeight} relative overflow-hidden rounded-2xl bg-panel-2`}>
       <MapContainer center={[20, 0]} zoom={2} className="h-full w-full" worldCopyJump>
         <TileLayer url={tiles.url} attribution={tiles.attribution} maxZoom={tiles.maxZoom} />
         {onClick && <ClickHandler onClick={onClick} />}
-        <Viewport bounds={bounds} locateTarget={locateTarget} onArrive={onArrive} />
+        <Viewport area={area} locateTarget={locateTarget} onArrive={onArrive} />
         {children}
       </MapContainer>
     </div>
@@ -435,37 +520,20 @@ function ClickHandler({ onClick }: { onClick: (p: Point) => void }) {
   return null;
 }
 
-function toLeaflet(b: Bounds): LatLngBoundsExpression {
-  return [
-    [b.south, b.west],
-    [b.north, b.east],
-  ];
-}
-
 // Vector layers added mid-flight get an SVG renderer created during the zoom
 // animation, which keeps the animation's scale and paints the whole map; the
-// located pin is only placed once the flight ends.
-function Viewport({ bounds, locateTarget, onArrive }: { bounds?: Bounds; locateTarget: Point | null; onArrive?: (p: Point) => void }) {
+// precision circle is only drawn once the flight ends.
+function Viewport({ area, locateTarget, onArrive }: { area?: Area; locateTarget: Point | null; onArrive?: () => void }) {
   const map = useMap();
-  const key = bounds ? `${bounds.south},${bounds.west},${bounds.north},${bounds.east}` : "";
+  const key = area ? `${area.center.lat},${area.center.lng},${area.radiusKm}` : "";
 
   useEffect(() => {
-    if (!bounds) {
-      // Leaflet clears max bounds when given none; its typings omit that case.
-      map.setMaxBounds(undefined as unknown as LatLngBoundsExpression);
-      map.setMinZoom(0);
-      return;
-    }
-    const lb = toLeaflet(bounds);
-    map.options.maxBoundsViscosity = 1;
-    map.setMaxBounds(lb);
-    map.fitBounds(lb, { animate: false });
-    map.setMinZoom(map.getBoundsZoom(lb));
+    if (area) map.fitBounds(latLng(area.center).toBounds(area.radiusKm * 2000), { animate: false });
   }, [map, key]);
 
   useEffect(() => {
     if (!locateTarget) return;
-    map.once("moveend", () => onArrive?.(locateTarget));
+    map.once("moveend", () => onArrive?.());
     map.flyTo(locateTarget, Math.max(map.getZoom(), locateZoom), { duration: flyDurationS });
   }, [map, locateTarget, onArrive]);
 

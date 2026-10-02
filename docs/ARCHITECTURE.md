@@ -56,13 +56,13 @@ The party handles `startGame` and `endGame` (leader only) and forwards every oth
 ### Ventana (scored)
 
 1. Setup: each player shares their location. They accept the browser geolocation prompt and confirm the pin, or drop it manually on the map.
-2. Each player chooses a privacy mode: exact point, or a circle of 500 m to 2 km. The circle center is randomly offset (up to 90% of the radius) and the exact point is discarded immediately, so the server never keeps it.
+2. Each player chooses a privacy mode: exact point, or a circle of 100 m, 200 m or 500 m. The circle center is randomly offset (up to 90% of the radius) and the exact point is discarded immediately, so the server never keeps it.
 3. The leader starts once at least two players are ready. Turns follow a random order among ready players; players without a location can still guess.
 4. On their turn, a player shows their window on the video call. The others place a guess.
-5. The guess map is limited to a 12 km box whose center is randomly offset up to 3.5 km from the target (less for large circles, so the whole circle stays inside), so the box narrows the search without revealing the answer. Players can pan and zoom inside it.
+5. Guesses must land inside a 5 km radius circle whose center is randomly offset from the target (up to 4.5 km minus the privacy radius, so the whole target stays inside). The circle narrows the search without revealing the answer; the map itself pans and zooms freely.
 6. The turn is revealed automatically when every online guesser has answered; the leader can also reveal early.
 7. Score per guess: `round(5000 * exp(-d / 2 km))`, where `d` is the distance to the point, or to the circle edge (0 inside the circle).
-8. After the last turn a final ranking is shown until the leader returns to the lobby.
+8. After the last turn the final ranking is revealed with suspense: 4th place and below appear first, then a spotlight roulette over the top three picks 3rd and 2nd, and the winner is celebrated. The server shuffles the top three once (`finalists` in the view) so every screen shows the same lineup and its order gives nothing away. The ranking stays on screen until the leader returns to the lobby.
 
 ### Who is most likely (unscored)
 
@@ -82,6 +82,7 @@ The party handles `startGame` and `endGame` (leader only) and forwards every oth
 | 2026-09-27 | Leaflet with Esri World Imagery satellite tiles, no API keys | Keep crewi free with no billing account; satellite imagery fits a game about window views. Esri's terms require an ArcGIS license for this endpoint; move to a free ArcGIS Location Platform key before any public or commercial use | Google Maps JS API (needs billing; rejected to stay free), Stadia Stamen Terrain (style rejected) |
 | 2026-09-28 | Player photos over HTTP, with only a revision number in the state | Twenty photos inside every broadcast would resend about 200 KB per vote; a revision lets browsers cache each photo | Base64 photos in the WebSocket state |
 | 2026-09-27 | Random-offset bounding box as the map hint | Narrows the search without leaking the answer and needs no geocoding service | Reverse geocoding the city name |
+| 2026-10-02 | 5 km random-offset guess circle with a free map | A locked box hid context around the area and felt cramped; the circle keeps the hint while the map pans anywhere | Max-bounds box (replaced) |
 
 ## Not Built for v1
 

@@ -1,7 +1,26 @@
 # One question per line. Empty lines and lines starting with # are ignored.
 # Each line completes "¿Quién es más probable que...".
 llegue tarde a la daily
-responda un mensaje a las 2 a.m.
-se pierda en una ciudad nueva
-gane un concurso de karaoke
+responda mensajes a las 2 a.m.
 tenga más pestañas abiertas en el browser
+se quede hablando con el micrófono en mute
+reaccione a un mensaje solo con stickers
+suba un PR un domingo en la noche
+suba un PR de 10.000 líneas y pida "un vistazo rápido"
+no asista a una reunión que él mismo programó
+renuncie para dedicarse a tener una granja
+termine preso por algo que no tiene nada que ver con el trabajo
+vaya a pagar la fianza de un compañero
+gane la lotería y no le diga a nadie
+te ayude con una mudanza sin que se lo pidas
+sea el más amigable en el onboarding de alguien nuevo
+rompa un NDA
+haga reuniones en los lugares más random
+nombre una variable temp2_final_v3
+revise un PR de 10.000 líneas en 2 minutos
+sea quien más escriba "LGTM" en el año
+use más tokens en el año
+conteste un mensaje de trabajo estando de vacaciones
+mande un mensaje al equipo a las 2 a.m.
+queme su límite de uso de tokens
+le diga "gracias" y "por favor" a la IA por miedo a que se rebele

@@ -57,6 +57,9 @@ func (g *Game) Act(t game.Table, playerID, action string, payload json.RawMessag
 			return game.ErrInvalidAction
 		}
 		g.votes[playerID] = p.Target
+		if g.everyoneVoted(t) {
+			g.phase = phaseRevealed
+		}
 		return nil
 	case action == "vote":
 		return game.ErrInvalidAction
@@ -149,4 +152,13 @@ func (g *Game) View(t game.Table, playerID string) any {
 		})
 	}
 	return v
+}
+
+func (g *Game) everyoneVoted(t game.Table) bool {
+	for _, pl := range t.Players {
+		if _, ok := g.votes[pl.ID]; pl.Online && !ok {
+			return false
+		}
+	}
+	return true
 }

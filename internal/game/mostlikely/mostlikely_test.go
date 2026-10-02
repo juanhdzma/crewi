@@ -8,7 +8,7 @@ import (
 	"github.com/juanhdzma/crewi/internal/game"
 )
 
-var table = game.Table{Players: []game.Player{{ID: "ana"}, {ID: "beto"}, {ID: "caro"}}, LeaderID: "ana"}
+var table = game.Table{Players: []game.Player{{ID: "ana", Online: true}, {ID: "beto", Online: true}, {ID: "caro", Online: true}}, LeaderID: "ana"}
 
 func act(t *testing.T, g *Game, playerID, action string, payload any) error {
 	t.Helper()
@@ -46,15 +46,17 @@ func TestFullRound(t *testing.T) {
 
 	must(t, act(t, g, "ana", "vote", map[string]string{"target": "beto"}))
 	must(t, act(t, g, "beto", "vote", map[string]string{"target": "caro"}))
-	must(t, act(t, g, "caro", "vote", map[string]string{"target": "beto"}))
 
 	v := g.View(table, "ana").(View)
-	if v.Question != "q2" || len(v.Voters) != 3 || v.MyVote != "beto" || v.Results != nil {
+	if v.Phase != phaseVoting || v.Question != "q2" || len(v.Voters) != 2 || v.MyVote != "beto" || v.Results != nil {
 		t.Fatalf("voting view leaks or is wrong: %+v", v)
 	}
 
-	must(t, act(t, g, "ana", "reveal", nil))
+	must(t, act(t, g, "caro", "vote", map[string]string{"target": "beto"}))
 	v = g.View(table, "caro").(View)
+	if v.Phase != phaseRevealed {
+		t.Fatalf("not revealed after every online player voted: %+v", v)
+	}
 	if len(v.Results) != 2 || v.Results[0] != (Result{"beto", 2}) || v.Results[1] != (Result{"caro", 1}) {
 		t.Fatalf("results = %+v", v.Results)
 	}

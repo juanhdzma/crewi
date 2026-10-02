@@ -248,24 +248,32 @@ const stepHeights = ["h-32", "h-24", "h-16"];
 
 const podiumColumns = ["col-start-2", "col-start-1", "col-start-3"];
 
-export function Podium({ steps, players, scoreLabel }: { steps: PodiumStep[]; players: Player[]; scoreLabel: (score: number) => string }) {
+type PodiumProps = { steps: PodiumStep[]; players: Player[]; scoreLabel: (score: number) => string; shown?: (place: number) => boolean };
+
+export function Podium({ steps, players, scoreLabel, shown = () => true }: PodiumProps) {
   const byId = new Map(players.map((p) => [p.id, p]));
   const order = [steps[1], steps[0], steps[2]].filter(Boolean);
   return (
     <div className="mx-auto grid w-full max-w-xl grid-cols-3 items-end gap-3">
       {order.map((step) => {
         const people = step.ids.map((id) => byId.get(id)).filter((p): p is Player => !!p);
+        const visible = shown(step.place);
         return (
           <div key={step.place} className={`row-start-1 flex flex-col items-center gap-2 text-center ${podiumColumns[step.place - 1]}`}>
-            <span className="flex -space-x-3">
-              {people.map((p) => (
-                <Avatar key={p.id} player={p} size="lg" className="anim-pop ring-4 ring-call" />
-              ))}
-            </span>
-            <span className="line-clamp-2 text-sm font-bold">{people.map((p) => p.name).join(" y ")}</span>
-            <span className="text-sm text-mute tabular-nums">{scoreLabel(step.score)}</span>
+            <div key={String(visible)} className={`flex flex-col items-center gap-2 ${visible ? "anim-pop [--i:8]" : "invisible"}`} aria-hidden={!visible}>
+              <span className="flex -space-x-3">
+                {people.map((p) => (
+                  <Avatar key={p.id} player={p} size="lg" className="ring-4 ring-call" />
+                ))}
+              </span>
+              <span className="line-clamp-2 text-sm font-bold">{people.map((p) => p.name).join(" y ")}</span>
+              <span className="text-sm text-mute tabular-nums">{scoreLabel(step.score)}</span>
+            </div>
             <span
-              className={`flex w-full items-start justify-center rounded-t-xl pt-2 text-3xl font-extrabold anim-grow-y ${stepHeights[step.place - 1]} ${step.place === 1 ? "bg-accent text-on-accent" : "bg-panel-2"}`}
+              key={`block-${visible}`}
+              className={`flex w-full items-start justify-center rounded-t-xl pt-2 text-3xl font-extrabold ${stepHeights[step.place - 1]} ${
+                !visible ? "invisible" : step.place === 1 ? "bg-accent text-on-accent anim-grow-y" : "bg-panel-2 anim-grow-y"
+              }`}
             >
               {step.place}
             </span>

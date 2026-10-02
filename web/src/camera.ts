@@ -18,6 +18,9 @@ export function snapshot(video: HTMLVideoElement): Promise<Blob> {
   const { sx, sy, size } = squareCrop(video.videoWidth, video.videoHeight);
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = photoSize;
-  canvas.getContext("2d")!.drawImage(video, sx, sy, size, size, 0, 0, photoSize, photoSize);
+  const ctx = canvas.getContext("2d")!;
+  ctx.translate(photoSize, 0);
+  ctx.scale(-1, 1);
+  ctx.drawImage(video, sx, sy, size, size, 0, 0, photoSize, photoSize);
   return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("No se pudo tomar la foto"))), "image/jpeg", 0.82));
 }

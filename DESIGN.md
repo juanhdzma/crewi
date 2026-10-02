@@ -132,6 +132,9 @@ Motion is expressive but short: cards rise, avatars pop, podium steps grow, conf
 
 ## Components
 
+### Logo
+An avatar stack: a coral disc in front of two person-color discs (p0 and p2). `Logo` in `web/src/ui.tsx` pairs the mark with the lowercase wordmark and links home; it sits on the `call` ground, top left, on the home, join and party-ended screens. The room header does not carry it, because it already shows the real avatar stack. The browser icon is the same mark on a navy tile: `web/public/favicon.svg`, a 32px PNG fallback and a 180px opaque `apple-touch-icon.png`.
+
 ### Room header
 Online avatars, code, "N personas · game", theme toggle and a pill of icon actions: copy link (turns green with a check when copied), back to lobby (host only, during a game) and leave (coral outline, door icon).
 

@@ -3,7 +3,7 @@ import { type MouseEvent, useEffect, useState } from "react";
 import { createParty, fetchParty, leaveParty, readSession, saveSession } from "./party";
 import { GameCopy, GameDemo, ScreenShare } from "./demos";
 import { games } from "./games";
-import { ThemeToggle } from "./ui";
+import { Logo, LogoMark, ThemeToggle } from "./ui";
 
 const people = [
   { name: "Ana", avatar: "🦊", tile: "bg-p0" },
@@ -104,9 +104,7 @@ function TopBar() {
   const [time] = useState(() => new Date().toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" }));
   return (
     <header className="flex h-14 items-center justify-between px-4 sm:px-6">
-      <a href="/" className="font-display text-2xl font-extrabold tracking-tight">
-        crewi
-      </a>
+      <Logo />
       <div className="flex items-center gap-2">
         <p className="hidden text-sm text-mute sm:block" aria-hidden>
           <span className="tabular-nums">{time}</span>
@@ -304,7 +302,10 @@ function CallEnded({ onCreate, busy }: { onCreate: () => void; busy: boolean }) 
           {busy ? "Creando…" : "Crear party"}
         </button>
       </div>
-      <footer className="py-10 text-center text-sm text-mute">crewi · juegos para equipos remotos</footer>
+      <footer className="flex items-center justify-center gap-2 py-10 text-sm text-mute">
+        <LogoMark className="h-3.5 w-auto" />
+        crewi · juegos para equipos remotos
+      </footer>
     </section>
   );
 }

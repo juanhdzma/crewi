@@ -30,6 +30,25 @@ export function Button({ variant = "primary", size = "md", className = "", ...pr
   );
 }
 
+export function LogoMark({ className = "h-5 w-auto" }: { className?: string }) {
+  return (
+    <svg viewBox="4 19 56 26" className={`shrink-0 ${className}`} aria-hidden>
+      <circle cx="15" cy="32" r="11" fill="var(--color-p0)" />
+      <circle cx="49" cy="32" r="11" fill="var(--color-p2)" />
+      <circle cx="32" cy="32" r="13" fill="var(--color-accent)" stroke="var(--color-call)" strokeWidth="3.5" />
+    </svg>
+  );
+}
+
+export function Logo({ className = "" }: { className?: string }) {
+  return (
+    <a href="/" className={`inline-flex items-center gap-2 font-display text-2xl font-extrabold tracking-tight ${className}`}>
+      <LogoMark />
+      crewi
+    </a>
+  );
+}
+
 export function ThemeToggle() {
   const { theme, toggle } = useTheme();
   const dark = theme === "dark";

@@ -3,7 +3,7 @@ import { type FormEvent, useEffect, useRef, useState } from "react";
 import { openCamera, snapshot } from "./camera";
 import { type PartyInfo, whoIsInside } from "./party";
 import { AvatarStack } from "./party-ui";
-import { Button } from "./ui";
+import { Button, Logo } from "./ui";
 
 type Props = {
   info: PartyInfo;
@@ -55,7 +55,8 @@ export function Join({ info, error, onJoin }: Props) {
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-4 py-10">
+    <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-4 pt-16 pb-10">
+      <Logo className="absolute top-3 left-4 sm:left-6" />
       <form onSubmit={submit} className="flex flex-col gap-6 rounded-3xl bg-panel p-6 sm:p-8">
         <div className="flex items-center gap-3">
           {info.players.length > 0 && <AvatarStack players={info.players} />}

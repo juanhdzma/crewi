@@ -5,7 +5,7 @@ import { partyCodeFromPath, photoUrl, type Player } from "./party";
 import { personColor } from "./people";
 import type { PodiumStep } from "./podium";
 import { type Presence } from "./presence";
-import { ThemeToggle } from "./ui";
+import { Logo, ThemeToggle } from "./ui";
 
 const avatarSizes = {
   sm: "size-8 text-base",
@@ -199,6 +199,7 @@ const endedAvatars = ["🦊", "🐼", "🐸", "🐙", "🦉"];
 export function EndedScreen({ title, text, action }: { title: string; text: string; action: React.ReactNode }) {
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-4 px-4 text-center">
+      <Logo className="absolute top-3 left-4 sm:left-6" />
       <span className="flex opacity-45 grayscale-[70%]" aria-hidden>
         {endedAvatars.map((a, i) => (
           <span key={a} className="-ml-3 flex size-14 items-center justify-center rounded-full text-3xl ring-4 ring-call first:ml-0" style={{ background: `var(--color-p${i})` }}>

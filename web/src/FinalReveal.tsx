@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { formatPoints } from "./format";
+import { formatNames, formatPoints } from "./format";
 import type { Player } from "./party";
 import { Avatar, Confetti } from "./party-ui";
 import { finalReveal, spotlight, type Placed, type Ranked, type Spotlight } from "./podium";
@@ -114,7 +114,7 @@ export function FinalReveal({ ranked, finalistIds, players, header }: Props) {
         {party ? (
           <>
             <p className="text-5xl leading-tight font-extrabold tracking-tight text-accent text-shadow-[0_0_30px_color-mix(in_srgb,var(--color-accent)_55%,transparent)] anim-party sm:text-6xl">
-              {winners.length > 1 ? `¡Empate! ${winnerNames.join(" y ")}` : `¡${winnerNames[0]} gana!`}
+              {winners.length > 1 ? `¡Empate! ${formatNames(winnerNames)}` : `¡${winnerNames[0]} gana!`}
             </p>
             <p className="text-mute anim-rise">{formatPoints(winnerPoints)} puntos</p>
           </>

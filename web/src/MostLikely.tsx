@@ -1,5 +1,6 @@
 import { Check, CheckCheck, Play, X } from "lucide-react";
 import { type CSSProperties, useEffect, useState } from "react";
+import { formatNames } from "./format";
 import type { Player } from "./party";
 import { AnswerProgress, Avatar, Confetti, Podium, ProgressDots, WaitingDots } from "./party-ui";
 import { podiumSteps } from "./podium";
@@ -38,7 +39,7 @@ export function MostLikely({ view, players, isLeader, send }: Props) {
   const voting = view.phase === "voting";
 
   return (
-    <section className="flex flex-col gap-6">
+    <section className="flex flex-col gap-8">
       <div className="flex flex-col gap-4">
         <div className="flex min-h-12 flex-wrap items-center justify-between gap-3">
           <ProgressDots current={view.index} total={view.total} label="Pregunta" />
@@ -65,8 +66,8 @@ export function MostLikely({ view, players, isLeader, send }: Props) {
 
 function QuestionCard({ question, more }: { question: string; more: boolean }) {
   return (
-    <div className="relative">
-      {more && <div className="absolute inset-x-4 -bottom-3 top-4 rotate-2 rounded-3xl bg-accent/35" aria-hidden />}
+    <div className={`relative ${more ? "mb-3" : ""}`}>
+      {more && <div className="absolute inset-x-5 top-3 -bottom-3 rounded-3xl bg-accent/35" aria-hidden />}
       <div key={question} className="relative rounded-3xl bg-accent p-6 text-on-accent shadow-[0_18px_40px_rgb(0_0_0/0.3)] anim-rise sm:p-9">
         <p className="text-sm font-bold opacity-70">¿Quién es más probable que…</p>
         <p className="mt-1 text-3xl leading-tight font-extrabold tracking-tight text-balance sm:text-4xl">{question}?</p>
@@ -129,7 +130,7 @@ function Results({ results, players }: { results: { playerId: string; votes: num
 
   if (results.length === 0) return <p className="text-mute">Nadie votó en esta pregunta.</p>;
   const done = revealed === steps;
-  const winners = podium[0].ids.map((id) => byId.get(id)?.name ?? "?").join(" y ");
+  const winners = formatNames(podium[0].ids.map((id) => byId.get(id)?.name ?? "?"));
   return (
     <div className="relative flex flex-col gap-4">
       {done && (

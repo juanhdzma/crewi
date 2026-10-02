@@ -1,5 +1,6 @@
 import { ArrowLeft, Check, CircleAlert, Link2, LogOut, WifiOff } from "lucide-react";
 import { useState } from "react";
+import { formatNames } from "./format";
 import { partyCodeFromPath, photoUrl, type Player } from "./party";
 import { personColor } from "./people";
 import type { PodiumStep } from "./podium";
@@ -246,6 +247,8 @@ export function WaitingDots({ text }: { text: string }) {
 
 const stepHeights = ["h-32", "h-24", "h-16"];
 
+const podiumFaces = 3;
+
 const podiumColumns = ["col-start-2", "col-start-1", "col-start-3"];
 
 type PodiumProps = { steps: PodiumStep[]; players: Player[]; scoreLabel: (score: number) => string; shown?: (place: number) => boolean };
@@ -262,11 +265,16 @@ export function Podium({ steps, players, scoreLabel, shown = () => true }: Podiu
           <div key={step.place} className={`row-start-1 flex flex-col items-center gap-2 text-center ${podiumColumns[step.place - 1]}`}>
             <div key={String(visible)} className={`flex flex-col items-center gap-2 ${visible ? "anim-pop [--i:8]" : "invisible"}`} aria-hidden={!visible}>
               <span className="flex -space-x-3">
-                {people.map((p) => (
+                {people.slice(0, people.length > podiumFaces ? podiumFaces - 1 : podiumFaces).map((p) => (
                   <Avatar key={p.id} player={p} size="lg" className="ring-4 ring-call" />
                 ))}
+                {people.length > podiumFaces && (
+                  <span className="flex size-16 shrink-0 items-center justify-center rounded-full bg-panel-2 text-lg font-extrabold ring-4 ring-call">
+                    +{people.length - podiumFaces + 1}
+                  </span>
+                )}
               </span>
-              <span className="line-clamp-2 text-sm font-bold">{people.map((p) => p.name).join(" y ")}</span>
+              <span className="line-clamp-2 text-sm font-bold">{formatNames(people.map((p) => p.name), podiumFaces)}</span>
               <span className="text-sm text-mute tabular-nums">{scoreLabel(step.score)}</span>
             </div>
             <span

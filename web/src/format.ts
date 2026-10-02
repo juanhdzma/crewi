@@ -10,3 +10,10 @@ export function formatDistance(km: number): string {
 export function formatPoints(points: number): string {
   return integer.format(points);
 }
+
+const names = new Intl.ListFormat("es", { type: "conjunction" });
+
+export function formatNames(list: string[], max = Infinity): string {
+  if (list.length <= max) return names.format(list);
+  return names.format([...list.slice(0, max - 1), `${list.length - max + 1} más`]);
+}

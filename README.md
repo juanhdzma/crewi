@@ -19,8 +19,9 @@
 **Who it's for:** teams that already meet on Meet, Zoom or Teams. Not a video call replacement; crewi has no audio or video. The interface is in Spanish.
 
 <!-- demo-video:start -->
-<!-- Pending: run /brag-slim, drag brag-output/brag.mp4 (<10 MB) into a GitHub issue comment,
-     paste the user-attachments URL on its own line here, then remove this comment. -->
+
+https://github.com/user-attachments/assets/5e72d992-566c-4e34-9a12-393faa21c00d
+
 <!-- demo-video:end -->
 
 ![Ventana](docs/img/ventana.png)

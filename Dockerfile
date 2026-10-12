@@ -16,4 +16,5 @@ RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /crewi ./cmd/crewi
 FROM gcr.io/distroless/static-debian13:nonroot
 COPY --from=build /crewi /crewi
 EXPOSE 8080
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 CMD ["/crewi", "health"]
 ENTRYPOINT ["/crewi"]

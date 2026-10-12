@@ -111,6 +111,8 @@ One environment variable, with a default.
 PORT=8080   # HTTP port the server listens on.
 ```
 
+The image ships its own `HEALTHCHECK` (`/crewi health`), so `docker ps` reports the container as `healthy` without extra configuration.
+
 ## Documentation
 
 | Doc | Read it when |

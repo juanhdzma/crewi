@@ -17,9 +17,18 @@ import (
 	"github.com/juanhdzma/crewi/web"
 )
 
-const sweepInterval = 10 * time.Second
+const (
+	sweepInterval = 10 * time.Second
+	healthTimeout = 3 * time.Second
+)
 
 func main() {
+	if len(os.Args) > 1 && os.Args[1] == "health" {
+		if !healthy("http://127.0.0.1:" + port() + "/") {
+			os.Exit(1)
+		}
+		return
+	}
 	log := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	if err := run(log); err != nil {
 		log.Error("server stopped", "error", err)
@@ -38,7 +47,7 @@ func run(log *slog.Logger) error {
 	parties := party.NewRegistry(time.Now)
 	go sweep(ctx, parties, log)
 
-	addr := ":" + cmp.Or(os.Getenv("PORT"), "8080")
+	addr := ":" + port()
 	srv := &http.Server{Addr: addr, Handler: server.New(parties, log, static).Handler(), ReadHeaderTimeout: 10 * time.Second}
 	go func() {
 		<-ctx.Done()
@@ -52,6 +61,20 @@ func run(log *slog.Logger) error {
 		return err
 	}
 	return nil
+}
+
+func port() string {
+	return cmp.Or(os.Getenv("PORT"), "8080")
+}
+
+func healthy(url string) bool {
+	client := http.Client{Timeout: healthTimeout}
+	res, err := client.Get(url)
+	if err != nil {
+		return false
+	}
+	res.Body.Close()
+	return res.StatusCode >= 200 && res.StatusCode < 300
 }
 
 func sweep(ctx context.Context, parties *party.Registry, log *slog.Logger) {

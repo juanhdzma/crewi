@@ -131,6 +131,18 @@ func TestUnknownPartyIs404(t *testing.T) {
 	}
 }
 
+func TestRootIs200(t *testing.T) {
+	ts := newTestServer(t)
+	res, err := http.Get(ts.URL + "/")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("status = %d, want 200", res.StatusCode)
+	}
+}
+
 func TestSPAFallbackServesIndex(t *testing.T) {
 	ts := newTestServer(t)
 	res, err := http.Get(ts.URL + "/p/ABC123")

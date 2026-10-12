@@ -22,6 +22,12 @@ services:
 
 The same file is at the repository root as `docker-compose.yml`, with `build: .` added so `docker compose up --build` works from a checkout. Set `PORT` to change the port the server listens on inside the container.
 
+## Healthcheck
+
+The image declares its own `HEALTHCHECK`, so the compose file does not need one. The final image is distroless, with no shell, `curl` or `wget`, so the check is the binary itself: `/crewi health` requests `http://127.0.0.1:$PORT/` with a 3 second timeout and exits 0 on a 2xx response, 1 otherwise. It reads the same `PORT` as the server.
+
+Docker runs it every 30 seconds after a 10 second start period, and marks the container `unhealthy` after 3 consecutive failures. `docker ps` shows the current state.
+
 ## HTTPS
 
 Put the container behind a reverse proxy or tunnel that terminates TLS. Browsers only grant geolocation (Ventana) and the camera (join photo) in a secure context, so over plain HTTP those features fail everywhere except `localhost`.
